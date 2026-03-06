@@ -1,0 +1,273 @@
+import { createClient } from "./supabase/server";
+import {
+  stablefordTotal,
+  stableford2v2Points,
+  matchPlay1v1Points,
+  type HoleScoreRow,
+} from "./team-points";
+
+export interface TeamTotals {
+  teamChubbs: number;
+  teamMcAvoy: number;
+}
+
+export interface LiveMatch {
+  id: string;
+  sessionName: string;
+  foursomeLabel: string | null;
+  matchType: string;
+  holes: number;
+  status: string;
+  teamAPoints?: number;
+  teamBPoints?: number;
+  matchPlayState?: string;
+  playerNames?: { team_a: string[]; team_b: string[] };
+}
+
+export async function getTeamTotals(): Promise<TeamTotals> {
+  const supabase = await createClient();
+  const { data: sessions } = await supabase
+    .from("sessions")
+    .select("id")
+    .eq("counts_for_team_competition", true);
+  if (!sessions?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
+
+  const sessionIds = sessions.map((s) => s.id);
+  const { data: foursomes } = await supabase
+    .from("foursomes")
+    .select("id, session_id")
+    .in("session_id", sessionIds);
+  if (!foursomes?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
+
+  const foursomeIds = foursomes.map((f) => f.id);
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("id, match_type, holes")
+    .in("foursome_id", foursomeIds);
+  if (!matches?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
+
+  const { data: config } = await supabase
+    .from("stableford_config")
+    .select("strokes_over_par, points");
+  const stablefordConfig = config ?? [];
+
+  let teamChubbs = 0;
+  let teamMcAvoy = 0;
+
+  for (const match of matches) {
+    const { data: matchPlayers } = await supabase
+      .from("match_players")
+      .select("player_id, side")
+      .eq("match_id", match.id);
+    if (!matchPlayers?.length) continue;
+
+    const teamAIds = matchPlayers.filter((p) => p.side === "team_a").map((p) => p.player_id);
+    const teamBIds = matchPlayers.filter((p) => p.side === "team_b").map((p) => p.player_id);
+
+    const { data: scores } = await supabase
+      .from("hole_scores")
+      .select("player_id, hole_number, gross_score")
+      .eq("match_id", match.id);
+    const scoreRows: HoleScoreRow[] = (scores ?? []).map((s) => ({
+      player_id: s.player_id,
+      hole_number: s.hole_number,
+      gross_score: s.gross_score,
+    }));
+
+    const holeCount = match.holes;
+
+    if (match.match_type === "stableford_2v2") {
+      const ptsA = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig);
+      const ptsB = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig);
+      const { team_a, team_b } = stableford2v2Points(ptsA, ptsB);
+      teamChubbs += team_a;
+      teamMcAvoy += team_b;
+    } else {
+      const teamAPlayerId = teamAIds[0];
+      const teamBPlayerId = teamBIds[0];
+      if (teamAPlayerId && teamBPlayerId) {
+        const { team_a, team_b } = matchPlay1v1Points(
+          scoreRows,
+          teamAPlayerId,
+          teamBPlayerId,
+          holeCount
+        );
+        teamChubbs += team_a;
+        teamMcAvoy += team_b;
+      }
+    }
+  }
+
+  return { teamChubbs, teamMcAvoy };
+}
+
+export async function getInProgressMatches(): Promise<LiveMatch[]> {
+  const supabase = await createClient();
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("id, foursome_id, match_type, holes, status")
+    .eq("status", "in_progress");
+  if (!matches?.length) return [];
+
+  const { data: config } = await supabase
+    .from("stableford_config")
+    .select("strokes_over_par, points");
+  const stablefordConfig = config ?? [];
+
+  const result: LiveMatch[] = [];
+
+  for (const m of matches) {
+    const { data: foursome } = await supabase
+      .from("foursomes")
+      .select("id, session_id, label")
+      .eq("id", m.foursome_id)
+      .single();
+    const { data: session } = foursome
+      ? await supabase.from("sessions").select("name").eq("id", foursome.session_id).single()
+      : { data: null };
+    const { data: matchPlayers } = await supabase
+      .from("match_players")
+      .select("player_id, side")
+      .eq("match_id", m.id);
+    const { data: players } = matchPlayers?.length
+      ? await supabase.from("players").select("id, name").in("id", matchPlayers.map((mp) => mp.player_id))
+      : { data: [] };
+    const playersById = new Map((players ?? []).map((p) => [p.id, p.name]));
+    const teamAIds = (matchPlayers ?? []).filter((p) => p.side === "team_a").map((p) => p.player_id);
+    const teamBIds = (matchPlayers ?? []).filter((p) => p.side === "team_b").map((p) => p.player_id);
+
+    const { data: scores } = await supabase
+      .from("hole_scores")
+      .select("player_id, hole_number, gross_score")
+      .eq("match_id", m.id);
+    const scoreRows: HoleScoreRow[] = (scores ?? []).map((s) => ({
+      player_id: s.player_id,
+      hole_number: s.hole_number,
+      gross_score: s.gross_score,
+    }));
+
+    let teamAPoints: number | undefined;
+    let teamBPoints: number | undefined;
+    let matchPlayState: string | undefined;
+
+    if (m.match_type === "stableford_2v2") {
+      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig);
+      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig);
+    } else {
+      const teamAPlayerId = teamAIds[0];
+      const teamBPlayerId = teamBIds[0];
+      if (teamAPlayerId && teamBPlayerId) {
+        const { team_a, team_b } = matchPlay1v1Points(
+          scoreRows,
+          teamAPlayerId,
+          teamBPlayerId,
+          m.holes
+        );
+        matchPlayState =
+          team_a > team_b
+            ? "Chubbs leads"
+            : team_b > team_a
+              ? "McAvoy leads"
+              : "All square";
+      }
+    }
+
+    result.push({
+      id: m.id,
+      sessionName: session?.name ?? "",
+      foursomeLabel: foursome?.label ?? null,
+      matchType: m.match_type,
+      holes: m.holes,
+      status: m.status,
+      teamAPoints,
+      teamBPoints,
+      matchPlayState,
+      playerNames: {
+        team_a: teamAIds.map((id) => playersById.get(id) ?? ""),
+        team_b: teamBIds.map((id) => playersById.get(id) ?? ""),
+      },
+    });
+  }
+
+  return result;
+}
+
+export async function getAllMatches(): Promise<LiveMatch[]> {
+  const supabase = await createClient();
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("id, foursome_id, match_type, holes, status")
+    .order("id");
+  if (!matches?.length) return [];
+
+  const { data: config } = await supabase
+    .from("stableford_config")
+    .select("strokes_over_par, points");
+  const stablefordConfig = config ?? [];
+  const result: LiveMatch[] = [];
+
+  for (const m of matches) {
+    const { data: foursome } = await supabase
+      .from("foursomes")
+      .select("id, session_id, label")
+      .eq("id", m.foursome_id)
+      .single();
+    const { data: session } = foursome
+      ? await supabase.from("sessions").select("name").eq("id", foursome.session_id).single()
+      : { data: null };
+    const { data: matchPlayers } = await supabase
+      .from("match_players")
+      .select("player_id, side")
+      .eq("match_id", m.id);
+    const teamAIds = (matchPlayers ?? []).filter((p) => p.side === "team_a").map((p) => p.player_id);
+    const teamBIds = (matchPlayers ?? []).filter((p) => p.side === "team_b").map((p) => p.player_id);
+    const { data: players } = matchPlayers?.length
+      ? await supabase.from("players").select("id, name").in("id", matchPlayers.map((mp) => mp.player_id))
+      : { data: [] };
+    const playersById = new Map((players ?? []).map((p) => [p.id, p.name]));
+
+    const { data: scores } = await supabase
+      .from("hole_scores")
+      .select("player_id, hole_number, gross_score")
+      .eq("match_id", m.id);
+    const scoreRows: HoleScoreRow[] = (scores ?? []).map((s) => ({
+      player_id: s.player_id,
+      hole_number: s.hole_number,
+      gross_score: s.gross_score,
+    }));
+
+    let teamAPoints: number | undefined;
+    let teamBPoints: number | undefined;
+    let matchPlayState: string | undefined;
+    if (m.match_type === "stableford_2v2") {
+      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig);
+      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig);
+    } else if (teamAIds[0] && teamBIds[0]) {
+      const { team_a, team_b } = matchPlay1v1Points(
+        scoreRows,
+        teamAIds[0],
+        teamBIds[0],
+        m.holes
+      );
+      matchPlayState =
+        team_a > team_b ? "Chubbs leads" : team_b > team_a ? "McAvoy leads" : "All square";
+    }
+
+    result.push({
+      id: m.id,
+      sessionName: session?.name ?? "",
+      foursomeLabel: foursome?.label ?? null,
+      matchType: m.match_type,
+      holes: m.holes,
+      status: m.status,
+      teamAPoints,
+      teamBPoints,
+      matchPlayState,
+      playerNames: {
+        team_a: teamAIds.map((id) => playersById.get(id) ?? ""),
+        team_b: teamBIds.map((id) => playersById.get(id) ?? ""),
+      },
+    });
+  }
+  return result;
+}
