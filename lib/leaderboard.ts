@@ -152,9 +152,16 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
   const foursomeIds = matches.map((m) => m.foursome_id);
   const { data: foursomes } = await supabase
     .from("foursomes")
-    .select("id, session_id, label")
+    .select("id, session_id, label, sort")
     .in("id", foursomeIds);
   const foursomesById = new Map((foursomes ?? []).map((f) => [f.id, f]));
+
+  const sortedMatches = [...matches].sort((a, b) => {
+    const sortA = foursomesById.get(a.foursome_id)?.sort ?? 0;
+    const sortB = foursomesById.get(b.foursome_id)?.sort ?? 0;
+    if (sortA !== sortB) return sortA - sortB;
+    return a.id.localeCompare(b.id);
+  });
 
   const sessionIds = Array.from(
     new Set((foursomes ?? []).map((f: any) => f.session_id as string))
@@ -190,7 +197,7 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
 
   const result: LiveMatch[] = [];
 
-  for (const m of matches) {
+  for (const m of sortedMatches) {
     const foursome = foursomesById.get(m.foursome_id);
     const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
     const courseId: string | undefined = (session as any)?.course_id ?? undefined;
