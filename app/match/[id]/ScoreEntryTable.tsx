@@ -19,6 +19,7 @@ export function ScoreEntryTable({
   teamBIds,
   parByHole,
   stablefordConfig,
+  readOnly = false,
 }: {
   matchId: string;
   players: { id: string; name: string }[];
@@ -29,6 +30,7 @@ export function ScoreEntryTable({
   teamBIds: string[];
   parByHole: Record<number, number> | null;
   stablefordConfig: { strokes_over_par: number; points: number }[];
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [scores, setScores] = useState<Map<string, number>>(() => {
@@ -127,6 +129,15 @@ export function ScoreEntryTable({
                     const value = getScore(pid, holeNum);
                     const isEmpty = value === undefined || value === null;
                     const isSaving = savingCell === key;
+                    if (readOnly) {
+                      return (
+                        <td key={pid} className="py-1 pr-4">
+                          <span className="inline-block w-12 px-2 py-1.5 rounded text-center text-sm bg-slate-50 text-slate-600 border border-slate-200">
+                            {value ?? "–"}
+                          </span>
+                        </td>
+                      );
+                    }
                     return (
                       <td key={pid} className="py-1 pr-4">
                         <input

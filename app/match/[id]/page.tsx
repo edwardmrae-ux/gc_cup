@@ -6,6 +6,7 @@ import {
   matchPlay1v1Points,
 } from "@/lib/team-points";
 import { ScoreEntryTable } from "./ScoreEntryTable";
+import { MatchStatusActions } from "./MatchStatusActions";
 
 export default async function MatchPage({
   params,
@@ -152,7 +153,9 @@ export default async function MatchPage({
         teamBIds={teamBIds}
         parByHole={parByHoleObj}
         stablefordConfig={stablefordConfig}
+        readOnly={match.status === "complete"}
       />
+      <MatchStatusActions matchId={matchId} currentStatus={match.status} />
     </div>
   );
 }

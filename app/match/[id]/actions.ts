@@ -21,3 +21,10 @@ export async function upsertHoleScore(
   if (error) return { error: error.message };
   return {};
 }
+
+export async function updateMatchStatus(matchId: string, status: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("matches").update({ status }).eq("id", matchId);
+  if (error) return { error: error.message };
+  return {};
+}
