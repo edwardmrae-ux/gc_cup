@@ -1,13 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getStablefordPoints, getParForHole } from "@/lib/stableford";
 import {
   stablefordTotal,
-  stableford2v2Points,
   matchPlay1v1Points,
 } from "@/lib/team-points";
-import { ScoreEntryForm } from "./ScoreEntryForm";
+import { ScoreEntryTable } from "./ScoreEntryTable";
 
 export default async function MatchPage({
   params,
@@ -115,10 +113,9 @@ export default async function MatchPage({
       team_a > team_b ? "Chubbs wins" : team_b > team_a ? "McAvoy wins" : "Halved";
   }
 
-  const getScore = (playerId: string, holeNum: number) =>
-    holeScores?.find((s) => s.player_id === playerId && s.hole_number === holeNum)?.gross_score;
-
   const allPlayerIds = [...teamAIds, ...teamBIds];
+  const parByHoleObj: Record<number, number> | null =
+    parByHole != null ? Object.fromEntries(parByHole) : null;
 
   return (
     <div className="space-y-6">
@@ -145,69 +142,16 @@ export default async function MatchPage({
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-slate-200">
-              <th className="text-left py-2 pr-4">Hole</th>
-              {allPlayerIds.map((pid) => (
-                <th key={pid} className="text-left py-2 pr-4">
-                  {playersById.get(pid) ?? pid.slice(0, 8)}
-                </th>
-              ))}
-              {match.match_type === "stableford_2v2" && (
-                <>
-                  <th className="text-left py-2">Chubbs pts</th>
-                  <th className="text-left py-2">McAvoy pts</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: holeCount }, (_, i) => i + 1).map((holeNum) => {
-              const coursePar =
-                parByHole instanceof Map ? parByHole.get(holeNum) : undefined;
-              const par = coursePar ?? getParForHole(holeNum);
-              const teamAPts =
-                match.match_type === "stableford_2v2"
-                  ? teamAIds.reduce((sum, pid) => {
-                      const s = getScore(pid, holeNum);
-                      return s == null ? sum : sum + getStablefordPoints(s, par, stablefordConfig);
-                    }, 0)
-                  : 0;
-              const teamBPts =
-                match.match_type === "stableford_2v2"
-                  ? teamBIds.reduce((sum, pid) => {
-                      const s = getScore(pid, holeNum);
-                      return s == null ? sum : sum + getStablefordPoints(s, par, stablefordConfig);
-                    }, 0)
-                  : 0;
-              return (
-                <tr key={holeNum} className="border-b border-slate-100">
-                  <td className="py-1 pr-4 font-medium">{holeNum}</td>
-                  {allPlayerIds.map((pid) => (
-                    <td key={pid} className="py-1 pr-4">
-                      {getScore(pid, holeNum) ?? "–"}
-                    </td>
-                  ))}
-                  {match.match_type === "stableford_2v2" && (
-                    <>
-                      <td className="py-1">{teamAPts || "–"}</td>
-                      <td className="py-1">{teamBPts || "–"}</td>
-                    </>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <ScoreEntryForm
+      <ScoreEntryTable
         matchId={matchId}
         players={allPlayerIds.map((id) => ({ id, name: playersById.get(id) ?? id }))}
         holeCount={holeCount}
-        existingScores={holeScores ?? []}
+        existingScores={scoreRows}
+        matchType={match.match_type}
+        teamAIds={teamAIds}
+        teamBIds={teamBIds}
+        parByHole={parByHoleObj}
+        stablefordConfig={stablefordConfig}
       />
     </div>
   );
