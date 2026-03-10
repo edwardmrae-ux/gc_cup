@@ -23,6 +23,7 @@ export interface Foursome {
   id: string;
   session_id: string;
   label: string | null;
+  sort?: number | null;
 }
 
 export interface Match {

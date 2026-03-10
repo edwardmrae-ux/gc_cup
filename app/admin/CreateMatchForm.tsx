@@ -8,10 +8,12 @@ export function CreateMatchForm({
   foursomes,
   players,
   teams,
+  sessions,
 }: {
   foursomes: { id: string; session_id: string; label: string | null }[];
   players: { id: string; name: string; team_id: string }[];
   teams: { id: string; name: string }[];
+  sessions: { id: string; name: string }[];
 }) {
   const [matchType, setMatchType] = useState<"stableford_2v2" | "match_play_1v1">("stableford_2v2");
   const [state, formAction] = useFormState(createMatch, {});
@@ -20,6 +22,7 @@ export function CreateMatchForm({
   const teamMcAvoy = teams.find((t) => t.name === "Team McAvoy")?.id;
   const chubbsPlayers = players.filter((p) => p.team_id === teamChubbs);
   const mcavoyPlayers = players.filter((p) => p.team_id === teamMcAvoy);
+  const sessionsById = new Map(sessions.map((s) => [s.id, s.name]));
 
   return (
     <form action={formAction} className="space-y-3 max-w-lg">
@@ -49,7 +52,9 @@ export function CreateMatchForm({
           <option value="">Foursome</option>
           {foursomes.map((f) => (
             <option key={f.id} value={f.id}>
-              {f.label ?? f.id.slice(0, 8)}
+              {`${sessionsById.get(f.session_id) ?? f.session_id.slice(0, 8)} – ${
+                f.label ?? "(no label)"
+              }`}
             </option>
           ))}
         </select>

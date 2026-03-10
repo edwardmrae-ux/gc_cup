@@ -80,7 +80,12 @@ export default async function AdminPage() {
 
       <section>
         <h2 className="text-lg font-semibold text-slate-800 mb-3">Matches</h2>
-        <CreateMatchForm foursomes={foursomes ?? []} players={players ?? []} teams={teams ?? []} />
+        <CreateMatchForm
+          foursomes={foursomes ?? []}
+          players={players ?? []}
+          teams={teams ?? []}
+          sessions={sessions ?? []}
+        />
         <ul className="mt-3 space-y-2 text-sm">
           {(matches ?? []).map((m) => (
             <li key={m.id} className="flex items-center gap-2 flex-wrap">
