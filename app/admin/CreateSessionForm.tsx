@@ -3,7 +3,11 @@
 import { useFormState } from "react-dom";
 import { createSession } from "./actions";
 
-export function CreateSessionForm() {
+export function CreateSessionForm({
+  courses,
+}: {
+  courses: { id: string; name: string; short_name: string | null }[];
+}) {
   const [state, formAction] = useFormState(createSession, {});
 
   return (
@@ -21,6 +25,18 @@ export function CreateSessionForm() {
         className="px-3 py-2 border border-slate-300 rounded text-sm"
         required
       />
+      <select
+        name="course_id"
+        className="px-3 py-2 border border-slate-300 rounded text-sm"
+        required
+      >
+        <option value="">Select course</option>
+        {courses.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.short_name ?? c.name}
+          </option>
+        ))}
+      </select>
       <label className="flex items-center gap-1 text-sm">
         <input type="checkbox" name="counts_for_team_competition" defaultChecked />
         Counts for team competition

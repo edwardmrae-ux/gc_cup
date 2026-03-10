@@ -14,6 +14,25 @@ export default async function MatchPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // #region agent log
+  fetch("http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "bec0f7",
+    },
+    body: JSON.stringify({
+      sessionId: "bec0f7",
+      runId: "pre-fix",
+      hypothesisId: "H2",
+      location: "app/match/[id]/page.tsx:MatchPage",
+      message: "MatchPage invoked",
+      data: {},
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
   const { id: matchId } = await params;
   const supabase = await createClient();
 
@@ -30,7 +49,11 @@ export default async function MatchPage({
     .eq("id", match.foursome_id)
     .single();
   const { data: session } = foursome
-    ? await supabase.from("sessions").select("name").eq("id", foursome.session_id).single()
+    ? await supabase
+        .from("sessions")
+        .select("name, course_id")
+        .eq("id", foursome.session_id)
+        .single()
     : { data: null };
   const { data: matchPlayers } = await supabase
     .from("match_players")
@@ -49,6 +72,21 @@ export default async function MatchPage({
     .from("stableford_config")
     .select("strokes_over_par, points");
 
+  // Load course hole pars if this session is tied to a course
+  let parByHole: Map<number, number> | undefined;
+  if (session?.course_id) {
+    const { data: courseHoles } = await supabase
+      .from("course_holes")
+      .select("hole_number, par, yardage")
+      .eq("course_id", session.course_id);
+    if (courseHoles) {
+      parByHole = new Map();
+      for (const row of courseHoles as { hole_number: number; par: number }[]) {
+        parByHole.set(row.hole_number, row.par);
+      }
+    }
+  }
+
   const playersById = new Map((players ?? []).map((p) => [p.id, p.name]));
   const teamAIds = (matchPlayers ?? []).filter((p) => p.side === "team_a").map((p) => p.player_id);
   const teamBIds = (matchPlayers ?? []).filter((p) => p.side === "team_b").map((p) => p.player_id);
@@ -64,8 +102,8 @@ export default async function MatchPage({
   let teamBPoints: number | null = null;
   let matchPlayState: string | null = null;
   if (match.match_type === "stableford_2v2") {
-    teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig);
-    teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig);
+    teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parByHole);
+    teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parByHole);
   } else if (teamAIds[0] && teamBIds[0]) {
     const { team_a, team_b } = matchPlay1v1Points(
       scoreRows,
@@ -127,7 +165,9 @@ export default async function MatchPage({
           </thead>
           <tbody>
             {Array.from({ length: holeCount }, (_, i) => i + 1).map((holeNum) => {
-              const par = getParForHole(holeNum);
+              const coursePar =
+                parByHole instanceof Map ? parByHole.get(holeNum) : undefined;
+              const par = coursePar ?? getParForHole(holeNum);
               const teamAPts =
                 match.match_type === "stableford_2v2"
                   ? teamAIds.reduce((sum, pid) => {

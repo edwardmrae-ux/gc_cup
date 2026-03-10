@@ -63,11 +63,15 @@ export async function createSession(_prev: { error?: string }, formData: FormDat
   const session_date = formData.get("session_date") as string;
   const counts = formData.get("counts_for_team_competition");
   const counts_for_team_competition = counts === "on" || counts === "true";
-  if (!name?.trim() || !session_date) return { error: "Name and date required" };
+  const course_id = formData.get("course_id") as string | null;
+  if (!name?.trim() || !session_date || !course_id) {
+    return { error: "Name, date, and course are required" };
+  }
   const { error } = await supabase.from("sessions").insert({
     name: name.trim(),
     session_date,
     counts_for_team_competition,
+    course_id,
   });
   if (error) return { error: error.message };
   return {};

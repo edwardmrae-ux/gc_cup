@@ -9,20 +9,26 @@ import Link from "next/link";
 export default async function AdminPage() {
   const supabase = await createClient();
   const [
+    { data: courses },
     { data: teams },
     { data: players },
     { data: sessions },
     { data: foursomes },
     { data: matches },
   ] = await Promise.all([
+    supabase.from("courses").select("id, name, short_name").order("name"),
     supabase.from("teams").select("id, name").order("name"),
     supabase.from("players").select("id, name, team_id").order("name"),
-    supabase.from("sessions").select("id, name, session_date, counts_for_team_competition").order("session_date"),
+    supabase
+      .from("sessions")
+      .select("id, name, session_date, counts_for_team_competition, course_id")
+      .order("session_date"),
     supabase.from("foursomes").select("id, session_id, label").order("session_id"),
     supabase.from("matches").select("id, foursome_id, holes, status, match_type").order("id"),
   ]);
 
   const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
+  const coursesById = new Map((courses ?? []).map((c) => [c.id, c]));
 
   return (
     <div className="space-y-10">
@@ -42,11 +48,18 @@ export default async function AdminPage() {
 
       <section>
         <h2 className="text-lg font-semibold text-slate-800 mb-3">Sessions</h2>
-        <CreateSessionForm />
+        <CreateSessionForm courses={courses ?? []} />
         <ul className="mt-3 space-y-1 text-sm">
           {(sessions ?? []).map((s) => (
             <li key={s.id}>
-              {s.name} ({s.session_date})
+              {s.name} ({s.session_date}
+              {s.course_id &&
+                ` – ${
+                  coursesById.get(s.course_id)?.short_name ??
+                  coursesById.get(s.course_id)?.name ??
+                  "Course"
+                }`}
+              )
               {!s.counts_for_team_competition && " (does not count)"}
             </li>
           ))}

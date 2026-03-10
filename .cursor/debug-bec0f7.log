@@ -1,0 +1,16 @@
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086498549}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086498555}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086498561}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H2","location":"app/match/[id]/page.tsx:MatchPage","message":"MatchPage invoked","data":{},"timestamp":1773086498559}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H2","location":"app/match/[id]/page.tsx:MatchPage","message":"MatchPage invoked","data":{},"timestamp":1773086498547}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H2","location":"app/match/[id]/page.tsx:MatchPage","message":"MatchPage invoked","data":{},"timestamp":1773086498554}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086519348}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086519351}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086519352}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086534099}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H2","location":"app/match/[id]/page.tsx:MatchPage","message":"MatchPage invoked","data":{},"timestamp":1773086534097}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773086538084}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H2","location":"app/match/[id]/page.tsx:MatchPage","message":"MatchPage invoked","data":{},"timestamp":1773086538084}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773106324542}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773106324568}
+{"sessionId":"bec0f7","runId":"pre-fix","hypothesisId":"H1","location":"lib/supabase/server.ts:createClient","message":"createClient called","data":{},"timestamp":1773106324569}

@@ -28,7 +28,7 @@ export async function getTeamTotals(): Promise<TeamTotals> {
   const supabase = await createClient();
   const { data: sessions } = await supabase
     .from("sessions")
-    .select("id")
+    .select("id, course_id")
     .eq("counts_for_team_competition", true);
   if (!sessions?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
 
@@ -39,12 +39,41 @@ export async function getTeamTotals(): Promise<TeamTotals> {
     .in("session_id", sessionIds);
   if (!foursomes?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
 
+  const foursomesById = new Map(foursomes.map((f) => [f.id, f]));
+  const sessionsById = new Map(sessions.map((s) => [s.id, s]));
+
   const foursomeIds = foursomes.map((f) => f.id);
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, match_type, holes")
-    .in("foursome_id", foursomeIds);
+    .select("id, foursome_id, match_type, holes, status")
+    .in("foursome_id", foursomeIds)
+    .eq("status", "complete");
   if (!matches?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
+
+  // Collect all course_ids used by these sessions
+  const courseIds = Array.from(
+    new Set(
+      sessions
+        .map((s: any) => s.course_id as string | null)
+        .filter((id): id is string => !!id)
+    )
+  );
+
+  let parByCourseAndHole = new Map<string, Map<number, number>>();
+  if (courseIds.length > 0) {
+    const { data: courseHoles } = await supabase
+      .from("course_holes")
+      .select("course_id, hole_number, par")
+      .in("course_id", courseIds);
+    if (courseHoles) {
+      for (const row of courseHoles as { course_id: string; hole_number: number; par: number }[]) {
+        if (!parByCourseAndHole.has(row.course_id)) {
+          parByCourseAndHole.set(row.course_id, new Map());
+        }
+        parByCourseAndHole.get(row.course_id)!.set(row.hole_number, row.par);
+      }
+    }
+  }
 
   const { data: config } = await supabase
     .from("stableford_config")
@@ -55,6 +84,11 @@ export async function getTeamTotals(): Promise<TeamTotals> {
   let teamMcAvoy = 0;
 
   for (const match of matches) {
+    const foursome = foursomesById.get(match.foursome_id);
+    const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
+    const courseId: string | undefined = (session as any)?.course_id ?? undefined;
+    const parMap = courseId ? parByCourseAndHole.get(courseId) : undefined;
+
     const { data: matchPlayers } = await supabase
       .from("match_players")
       .select("player_id, side")
@@ -77,8 +111,8 @@ export async function getTeamTotals(): Promise<TeamTotals> {
     const holeCount = match.holes;
 
     if (match.match_type === "stableford_2v2") {
-      const ptsA = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig);
-      const ptsB = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig);
+      const ptsA = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parMap);
+      const ptsB = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parMap);
       const { team_a, team_b } = stableford2v2Points(ptsA, ptsB);
       teamChubbs += team_a;
       teamMcAvoy += team_b;
@@ -114,17 +148,53 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
     .select("strokes_over_par, points");
   const stablefordConfig = config ?? [];
 
+  // Preload foursomes and sessions with course information
+  const foursomeIds = matches.map((m) => m.foursome_id);
+  const { data: foursomes } = await supabase
+    .from("foursomes")
+    .select("id, session_id, label")
+    .in("id", foursomeIds);
+  const foursomesById = new Map((foursomes ?? []).map((f) => [f.id, f]));
+
+  const sessionIds = Array.from(
+    new Set((foursomes ?? []).map((f: any) => f.session_id as string))
+  );
+  const { data: sessions } = await supabase
+    .from("sessions")
+    .select("id, name, course_id")
+    .in("id", sessionIds);
+  const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
+
+  const courseIds = Array.from(
+    new Set(
+      (sessions ?? [])
+        .map((s: any) => s.course_id as string | null)
+        .filter((id): id is string => !!id)
+    )
+  );
+  let parByCourseAndHole = new Map<string, Map<number, number>>();
+  if (courseIds.length > 0) {
+    const { data: courseHoles } = await supabase
+      .from("course_holes")
+      .select("course_id, hole_number, par")
+      .in("course_id", courseIds);
+    if (courseHoles) {
+      for (const row of courseHoles as { course_id: string; hole_number: number; par: number }[]) {
+        if (!parByCourseAndHole.has(row.course_id)) {
+          parByCourseAndHole.set(row.course_id, new Map());
+        }
+        parByCourseAndHole.get(row.course_id)!.set(row.hole_number, row.par);
+      }
+    }
+  }
+
   const result: LiveMatch[] = [];
 
   for (const m of matches) {
-    const { data: foursome } = await supabase
-      .from("foursomes")
-      .select("id, session_id, label")
-      .eq("id", m.foursome_id)
-      .single();
-    const { data: session } = foursome
-      ? await supabase.from("sessions").select("name").eq("id", foursome.session_id).single()
-      : { data: null };
+    const foursome = foursomesById.get(m.foursome_id);
+    const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
+    const courseId: string | undefined = (session as any)?.course_id ?? undefined;
+    const parMap = courseId ? parByCourseAndHole.get(courseId) : undefined;
     const { data: matchPlayers } = await supabase
       .from("match_players")
       .select("player_id, side")
@@ -151,8 +221,8 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
     let matchPlayState: string | undefined;
 
     if (m.match_type === "stableford_2v2") {
-      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig);
-      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig);
+      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig, parMap);
+      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig, parMap);
     } else {
       const teamAPlayerId = teamAIds[0];
       const teamBPlayerId = teamBIds[0];
@@ -174,7 +244,7 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
 
     result.push({
       id: m.id,
-      sessionName: session?.name ?? "",
+      sessionName: (session as any)?.name ?? "",
       foursomeLabel: foursome?.label ?? null,
       matchType: m.match_type,
       holes: m.holes,
@@ -204,17 +274,53 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     .from("stableford_config")
     .select("strokes_over_par, points");
   const stablefordConfig = config ?? [];
+
+  const foursomeIds = matches.map((m) => m.foursome_id);
+  const { data: foursomes } = await supabase
+    .from("foursomes")
+    .select("id, session_id, label")
+    .in("id", foursomeIds);
+  const foursomesById = new Map((foursomes ?? []).map((f) => [f.id, f]));
+
+  const sessionIds = Array.from(
+    new Set((foursomes ?? []).map((f: any) => f.session_id as string))
+  );
+  const { data: sessions } = await supabase
+    .from("sessions")
+    .select("id, name, course_id")
+    .in("id", sessionIds);
+  const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
+
+  const courseIds = Array.from(
+    new Set(
+      (sessions ?? [])
+        .map((s: any) => s.course_id as string | null)
+        .filter((id): id is string => !!id)
+    )
+  );
+  let parByCourseAndHole = new Map<string, Map<number, number>>();
+  if (courseIds.length > 0) {
+    const { data: courseHoles } = await supabase
+      .from("course_holes")
+      .select("course_id, hole_number, par")
+      .in("course_id", courseIds);
+    if (courseHoles) {
+      for (const row of courseHoles as { course_id: string; hole_number: number; par: number }[]) {
+        if (!parByCourseAndHole.has(row.course_id)) {
+          parByCourseAndHole.set(row.course_id, new Map());
+        }
+        parByCourseAndHole.get(row.course_id)!.set(row.hole_number, row.par);
+      }
+    }
+  }
+
   const result: LiveMatch[] = [];
 
   for (const m of matches) {
-    const { data: foursome } = await supabase
-      .from("foursomes")
-      .select("id, session_id, label")
-      .eq("id", m.foursome_id)
-      .single();
-    const { data: session } = foursome
-      ? await supabase.from("sessions").select("name").eq("id", foursome.session_id).single()
-      : { data: null };
+    const foursome = foursomesById.get(m.foursome_id);
+    const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
+    const courseId: string | undefined = (session as any)?.course_id ?? undefined;
+    const parMap = courseId ? parByCourseAndHole.get(courseId) : undefined;
     const { data: matchPlayers } = await supabase
       .from("match_players")
       .select("player_id, side")
@@ -240,8 +346,8 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     let teamBPoints: number | undefined;
     let matchPlayState: string | undefined;
     if (m.match_type === "stableford_2v2") {
-      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig);
-      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig);
+      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig, parMap);
+      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig, parMap);
     } else if (teamAIds[0] && teamBIds[0]) {
       const { team_a, team_b } = matchPlay1v1Points(
         scoreRows,
@@ -255,7 +361,7 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
 
     result.push({
       id: m.id,
-      sessionName: session?.name ?? "",
+      sessionName: (session as any)?.name ?? "",
       foursomeLabel: foursome?.label ?? null,
       matchType: m.match_type,
       holes: m.holes,

@@ -8,10 +8,9 @@ CREATE TABLE IF NOT EXISTS stableford_config (
 
 -- Default: 0 = double+, 1 = bogey, 2 = par, 3 = birdie, 4 = eagle, 5 = albatross
 INSERT INTO stableford_config (strokes_over_par, points) VALUES
-  (2, 0),
-  (1, 1),
-  (0, 2),
-  (-1, 3),
-  (-2, 4),
-  (-3, 5)
+  (2, 1),
+  (1, 2),
+  (0, 3),
+  (-1, 5),
+  (-2, 10)
 ON CONFLICT (strokes_over_par) DO NOTHING;

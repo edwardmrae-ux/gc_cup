@@ -18,7 +18,8 @@ export function stablefordTotal(
   scores: HoleScoreRow[],
   playerIds: string[],
   holeCount: number,
-  config?: { strokes_over_par: number; points: number }[]
+  config?: { strokes_over_par: number; points: number }[],
+  parByHole?: Map<number, number> | Record<number, number>
 ): number {
   let total = 0;
   const byPlayer = new Map<string, HoleScoreRow[]>();
@@ -30,9 +31,15 @@ export function stablefordTotal(
     const playerScores = byPlayer.get(pid) ?? [];
     for (let h = 1; h <= holeCount; h++) {
       const row = playerScores.find((s) => s.hole_number === h);
-      if (row) {
-        total += getStablefordPoints(row.gross_score, getParForHole(h), config);
+      if (!row) continue;
+      let par: number | undefined;
+      if (parByHole instanceof Map) {
+        par = parByHole.get(h);
+      } else if (parByHole) {
+        par = (parByHole as Record<number, number>)[h];
       }
+      const effectivePar = par ?? getParForHole(h);
+      total += getStablefordPoints(row.gross_score, effectivePar, config);
     }
   }
   return total;
