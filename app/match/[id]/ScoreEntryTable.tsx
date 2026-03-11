@@ -123,7 +123,7 @@ export function ScoreEntryTable({
                 : 0;
               return (
                 <tr key={holeNum} className="border-b border-slate-100">
-                  <td className="py-1.5 pr-4 pl-4 font-medium text-slate-800">{holeNum}</td>
+                  <td className="py-1.5 pr-4 pl-4 font-medium text-slate-800">{holeNum} (Par {par})</td>
                   {allPlayerIds.map((pid) => {
                     const key = scoreKey(pid, holeNum);
                     const value = getScore(pid, holeNum);
