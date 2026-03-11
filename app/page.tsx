@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTeamTotals, getInProgressMatches, getAllMatches } from "@/lib/leaderboard";
+import { MatchesSection } from "./MatchesSection";
 
 export default async function LeaderboardPage() {
   const [totals, liveMatches, allMatches] = await Promise.all([
@@ -7,6 +8,8 @@ export default async function LeaderboardPage() {
     getInProgressMatches(),
     getAllMatches(),
   ]);
+
+  const completedMatches = allMatches.filter((m) => m.status === "complete");
 
   return (
     <div className="space-y-8">
@@ -27,84 +30,11 @@ export default async function LeaderboardPage() {
         </div>
       </section>
 
-      {liveMatches.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold text-slate-700 mb-3">Live matches</h2>
-          <ul className="space-y-3">
-            {liveMatches.map((m) => (
-              <li key={m.id}>
-                <Link
-                  href={`/match/${m.id}`}
-                  className="block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm"
-                >
-                  {/* SESSION HEADER */}
-                  <div className="mb-3 text-center">
-                    <p className="font-medium text-slate-800 text-lg">
-                      {m.sessionName}
-                      {m.foursomeLabel ? ` – ${m.foursomeLabel}` : ""}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      {m.matchType === "stableford_2v2"
-                        ? "2v2 Stableford"
-                        : "1v1 Match play"}{" "}
-                      – {m.holes} holes
-                    </p>
-                  </div>
-                  <div className="flex divide-x divide-slate-200">
-                    {/* LEFT: TEAM CHUBBS */}
-                    <div className="flex-1 px-3">
-                      <div className="mb-2">
-                        <p className="font-bold text-slate-900">Team Chubbs</p>
-                        {m.playerNames && (
-                          <ul className="text-xs text-slate-600 mt-1">
-                            {m.playerNames.team_a.map((name: string, idx: number) => (
-                              <li key={idx}>{name}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                      {m.matchType === "stableford_2v2" && (
-                        <div>
-                          <p className="text-2xl font-bold text-slate-800">
-                            {m.teamAPoints ?? 0}
-                          </p>
-                        </div>
-                      )}
-                      {m.matchType === "match_play_1v1" && m.matchPlayState && (
-                        <div>
-                          <p className="text-lg font-semibold text-slate-800">
-                            {m.matchPlayState}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    {/* RIGHT: TEAM MCAVOY */}
-                    <div className="flex-1 px-3">
-                      <div className="mb-2 text-right">
-                        <p className="font-bold text-slate-900">Team McAvoy</p>
-                        {m.playerNames && (
-                          <ul className="text-xs text-slate-600 mt-1">
-                            {m.playerNames.team_b.map((name: string, idx: number) => (
-                              <li key={idx}>{name}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                      {m.matchType === "stableford_2v2" && (
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-slate-800">
-                            {m.teamBPoints ?? 0}
-                          </p>
-                        </div>
-                      )}
-                      {/* For match_play_1v1, score/state is shown on left already */}
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {(liveMatches.length > 0 || completedMatches.length > 0) && (
+        <MatchesSection
+          liveMatches={liveMatches}
+          completedMatches={completedMatches}
+        />
       )}
 
       {allMatches.length > 0 && (
