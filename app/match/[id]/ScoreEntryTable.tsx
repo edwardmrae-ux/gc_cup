@@ -181,6 +181,37 @@ export function ScoreEntryTable({
                 </tr>
               );
             })}
+            {(() => {
+              const playerTotals = allPlayerIds.map((pid) =>
+                holeNumbers.reduce(
+                  (sum, holeNum) => sum + (getScore(pid, holeNum) ?? 0),
+                  0
+                )
+              );
+              const hasAnyScore = playerTotals.some((t) => t > 0);
+              if (!hasAnyScore) return null;
+              return (
+                <tr className="border-t-2 border-slate-200 bg-slate-50/80">
+                  <td className="py-2 pr-4 pl-4 font-semibold text-slate-800">
+                    Total
+                  </td>
+                  {allPlayerIds.map((pid, i) => (
+                    <td
+                      key={pid}
+                      className="py-2 pr-4 font-semibold text-slate-800"
+                    >
+                      {playerTotals[i] || "–"}
+                    </td>
+                  ))}
+                  {is2v2 && (
+                    <>
+                      <td className="py-2 pr-4 text-slate-600">–</td>
+                      <td className="py-2 pr-4 text-slate-600">–</td>
+                    </>
+                  )}
+                </tr>
+              );
+            })()}
           </tbody>
         </table>
       </div>
