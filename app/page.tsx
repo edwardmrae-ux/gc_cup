@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTeamTotals, getInProgressMatches, getAllMatches } from "@/lib/leaderboard";
+import { getTeamTotals, getAllMatches, partitionMatchesBySessionAndStatus } from "@/lib/leaderboard";
 import { MatchesSection } from "./MatchesSection";
 import { getActiveSessionId } from "@/lib/activeSessionStore";
 import { createClient } from "@/lib/supabase/server";
@@ -7,12 +7,16 @@ import { createClient } from "@/lib/supabase/server";
 export default async function LeaderboardPage() {
   const supabase = await createClient();
 
-  const [totals, liveMatches, allMatches, activeSessionId] = await Promise.all([
+  const [totals, allMatches, activeSessionId] = await Promise.all([
     getTeamTotals(),
-    getInProgressMatches(),
     getAllMatches(),
     getActiveSessionId(),
   ]);
+
+  const { liveMatches, completedMatches, upcomingMatches } = partitionMatchesBySessionAndStatus(
+    allMatches,
+    activeSessionId
+  );
 
   let activeSessionName: string | null = null;
 
@@ -24,8 +28,6 @@ export default async function LeaderboardPage() {
       .maybeSingle();
     activeSessionName = (session as any)?.name ?? null;
   }
-
-  const completedMatches = allMatches.filter((m) => m.status === "complete");
 
   return (
     <div className="space-y-8">
@@ -46,10 +48,11 @@ export default async function LeaderboardPage() {
         </div>
       </section>
 
-      {(liveMatches.length > 0 || completedMatches.length > 0) && (
+      {(liveMatches.length > 0 || completedMatches.length > 0 || upcomingMatches.length > 0) && (
         <MatchesSection
           liveMatches={liveMatches}
           completedMatches={completedMatches}
+          upcomingMatches={upcomingMatches}
           activeSessionName={activeSessionName}
         />
       )}

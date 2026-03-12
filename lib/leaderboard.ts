@@ -13,6 +13,7 @@ export interface TeamTotals {
 
 export interface LiveMatch {
   id: string;
+  sessionId: string | null;
   sessionName: string;
   foursomeLabel: string | null;
   matchType: string;
@@ -22,6 +23,26 @@ export interface LiveMatch {
   teamBPoints?: number;
   matchPlayState?: string;
   playerNames?: { team_a: string[]; team_b: string[] };
+}
+
+export function partitionMatchesBySessionAndStatus(
+  allMatches: LiveMatch[],
+  activeSessionId: string | null
+): {
+  liveMatches: LiveMatch[];
+  completedMatches: LiveMatch[];
+  upcomingMatches: LiveMatch[];
+} {
+  const liveMatches = allMatches.filter(
+    (m) => activeSessionId != null && m.sessionId === activeSessionId
+  );
+  const completedMatches = allMatches.filter(
+    (m) => m.status === "complete" && m.sessionId !== activeSessionId
+  );
+  const upcomingMatches = allMatches.filter(
+    (m) => m.status !== "complete" && m.sessionId !== activeSessionId
+  );
+  return { liveMatches, completedMatches, upcomingMatches };
 }
 
 export async function getTeamTotals(): Promise<TeamTotals> {
@@ -266,6 +287,7 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
 
     result.push({
       id: m.id,
+      sessionId: foursome?.session_id ?? null,
       sessionName: (session as any)?.name ?? "",
       foursomeLabel: foursome?.label ?? null,
       matchType: m.match_type,
@@ -398,6 +420,7 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
 
     result.push({
       id: m.id,
+      sessionId: foursome?.session_id ?? null,
       sessionName: (session as any)?.name ?? "",
       foursomeLabel: foursome?.label ?? null,
       matchType: m.match_type,

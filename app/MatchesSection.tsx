@@ -80,18 +80,41 @@ function MatchCard({ m, isActive }: { m: LiveMatch; isActive: boolean }) {
   );
 }
 
+type MatchTab = "live" | "completed" | "upcoming";
+
 interface MatchesSectionProps {
   liveMatches: LiveMatch[];
   completedMatches: LiveMatch[];
+  upcomingMatches: LiveMatch[];
   activeSessionName?: string | null;
 }
 
-export function MatchesSection({ liveMatches, completedMatches, activeSessionName }: MatchesSectionProps) {
-  const [activeTab, setActiveTab] = useState<"live" | "completed">(
-    liveMatches.length > 0 ? "live" : "completed"
+function getInitialTab(
+  liveMatches: LiveMatch[],
+  completedMatches: LiveMatch[],
+  upcomingMatches: LiveMatch[]
+): MatchTab {
+  if (liveMatches.length > 0) return "live";
+  if (upcomingMatches.length > 0) return "upcoming";
+  return "completed";
+}
+
+export function MatchesSection({
+  liveMatches,
+  completedMatches,
+  upcomingMatches,
+  activeSessionName,
+}: MatchesSectionProps) {
+  const [activeTab, setActiveTab] = useState<MatchTab>(() =>
+    getInitialTab(liveMatches, completedMatches, upcomingMatches)
   );
 
-  const matches = activeTab === "live" ? liveMatches : completedMatches;
+  const matches =
+    activeTab === "live"
+      ? liveMatches
+      : activeTab === "upcoming"
+        ? upcomingMatches
+        : completedMatches;
 
   return (
     <section>
@@ -127,20 +150,37 @@ export function MatchesSection({ liveMatches, completedMatches, activeSessionNam
           >
             Completed
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "upcoming"}
+            onClick={() => setActiveTab("upcoming")}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === "upcoming"
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-600 hover:text-slate-800"
+            }`}
+          >
+            Upcoming
+          </button>
         </div>
       </div>
-      <ul className="space-y-3">
-        {matches.map((m) => {
-          const isActive =
-            !!activeSessionName &&
-            m.sessionName.toLowerCase().trim() === activeSessionName.toLowerCase().trim();
-          return (
-            <li key={m.id}>
-              <MatchCard m={m} isActive={isActive} />
-            </li>
-          );
-        })}
-      </ul>
+      {matches.length === 0 ? (
+        <p className="text-sm text-slate-500 py-4">No matches in this category yet.</p>
+      ) : (
+        <ul className="space-y-3">
+          {matches.map((m) => {
+            const isActive =
+              !!activeSessionName &&
+              m.sessionName.toLowerCase().trim() === activeSessionName.toLowerCase().trim();
+            return (
+              <li key={m.id}>
+                <MatchCard m={m} isActive={isActive} />
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
