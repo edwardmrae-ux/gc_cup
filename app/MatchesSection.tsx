@@ -4,24 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 
-function MatchCard({ m, isActive }: { m: LiveMatch; isActive: boolean }) {
+function MatchCard({ m }: { m: LiveMatch }) {
   return (
     <Link
       href={`/match/${m.id}`}
-      className={`block border rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm ${
-        isActive ? "border-amber-500 ring-1 ring-amber-300" : "border-slate-200"
-      }`}
+      className="block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm"
     >
       <div className="mb-3 text-center">
         <p className="font-medium text-slate-800 text-lg">
           {m.sessionName}
           {m.foursomeLabel ? ` – ${m.foursomeLabel}` : ""}
         </p>
-        {isActive && (
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-            Active round
-          </p>
-        )}
         <p className="text-sm text-slate-600">
           {m.matchType === "stableford_2v2"
             ? "2v2 Stableford"
@@ -86,7 +79,6 @@ interface MatchesSectionProps {
   liveMatches: LiveMatch[];
   completedMatches: LiveMatch[];
   upcomingMatches: LiveMatch[];
-  activeSessionName?: string | null;
 }
 
 function getInitialTab(
@@ -103,7 +95,6 @@ export function MatchesSection({
   liveMatches,
   completedMatches,
   upcomingMatches,
-  activeSessionName,
 }: MatchesSectionProps) {
   const [activeTab, setActiveTab] = useState<MatchTab>(() =>
     getInitialTab(liveMatches, completedMatches, upcomingMatches)
@@ -169,16 +160,11 @@ export function MatchesSection({
         <p className="text-sm text-slate-500 py-4">No matches in this category yet.</p>
       ) : (
         <ul className="space-y-3">
-          {matches.map((m) => {
-            const isActive =
-              !!activeSessionName &&
-              m.sessionName.toLowerCase().trim() === activeSessionName.toLowerCase().trim();
-            return (
-              <li key={m.id}>
-                <MatchCard m={m} isActive={isActive} />
-              </li>
-            );
-          })}
+          {matches.map((m) => (
+            <li key={m.id}>
+              <MatchCard m={m} />
+            </li>
+          ))}
         </ul>
       )}
     </section>
