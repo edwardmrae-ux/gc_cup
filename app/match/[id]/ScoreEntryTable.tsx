@@ -12,7 +12,7 @@ function scoreKey(playerId: string, holeNum: number) {
 export function ScoreEntryTable({
   matchId,
   players,
-  holeCount,
+  holeNumbers,
   existingScores,
   matchType,
   teamAIds,
@@ -23,7 +23,7 @@ export function ScoreEntryTable({
 }: {
   matchId: string;
   players: { id: string; name: string }[];
-  holeCount: number;
+  holeNumbers: number[];
   existingScores: { player_id: string; hole_number: number; gross_score: number }[];
   matchType: "stableford_2v2" | "match_play_1v1";
   teamAIds: string[];
@@ -107,7 +107,7 @@ export function ScoreEntryTable({
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: holeCount }, (_, i) => i + 1).map((holeNum) => {
+            {holeNumbers.map((holeNum) => {
               const par = parByHole?.[holeNum] ?? getParForHole(holeNum);
               const teamAPts = is2v2
                 ? teamAIds.reduce((sum, pid) => {

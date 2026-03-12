@@ -13,13 +13,15 @@ export interface MatchPlayersBySide {
 
 /**
  * Compute Stableford total for a set of players (e.g. one pair in 2v2).
+ * When holeNumbers is provided (e.g. [10..18] for back 9), only those holes are summed.
  */
 export function stablefordTotal(
   scores: HoleScoreRow[],
   playerIds: string[],
   holeCount: number,
   config?: { strokes_over_par: number; points: number }[],
-  parByHole?: Map<number, number> | Record<number, number>
+  parByHole?: Map<number, number> | Record<number, number>,
+  holeNumbers?: number[]
 ): number {
   let total = 0;
   const byPlayer = new Map<string, HoleScoreRow[]>();
@@ -27,9 +29,10 @@ export function stablefordTotal(
     if (!byPlayer.has(s.player_id)) byPlayer.set(s.player_id, []);
     byPlayer.get(s.player_id)!.push(s);
   }
+  const holesToSum = holeNumbers ?? Array.from({ length: holeCount }, (_, i) => i + 1);
   for (const pid of playerIds) {
     const playerScores = byPlayer.get(pid) ?? [];
-    for (let h = 1; h <= holeCount; h++) {
+    for (const h of holesToSum) {
       const row = playerScores.find((s) => s.hole_number === h);
       if (!row) continue;
       let par: number | undefined;
@@ -74,16 +77,19 @@ export function matchPlayHoleWinner(
 /**
  * Match play result: count holes won per side, then overall (lead or tie).
  * Returns { team_a: 0|0.5|1, team_b: 0|0.5|1 }.
+ * When holeNumbers is provided (e.g. [10..18] for back 9), only those holes are counted.
  */
 export function matchPlay1v1Points(
   scores: HoleScoreRow[],
   teamAPlayerId: string,
   teamBPlayerId: string,
-  holeCount: number
+  holeCount: number,
+  holeNumbers?: number[]
 ): { team_a: number; team_b: number } {
   let winsA = 0;
   let winsB = 0;
-  for (let h = 1; h <= holeCount; h++) {
+  const holesToCount = holeNumbers ?? Array.from({ length: holeCount }, (_, i) => i + 1);
+  for (const h of holesToCount) {
     const sA = scores.find(
       (s) => s.player_id === teamAPlayerId && s.hole_number === h
     );

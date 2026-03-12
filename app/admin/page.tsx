@@ -29,6 +29,7 @@ export default async function AdminPage() {
 
   const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
   const coursesById = new Map((courses ?? []).map((c) => [c.id, c]));
+  const foursomesById = new Map((foursomes ?? []).map((f) => [f.id, f]));
 
   return (
     <div className="space-y-10">
@@ -87,14 +88,22 @@ export default async function AdminPage() {
           sessions={sessions ?? []}
         />
         <ul className="mt-3 space-y-2 text-sm">
-          {(matches ?? []).map((m) => (
-            <li key={m.id} className="flex items-center gap-2 flex-wrap">
-              <Link href={`/match/${m.id}`} className="text-blue-600 hover:underline">
-                {m.match_type === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {m.holes} holes
-              </Link>
-              <MatchStatusSelect matchId={m.id} currentStatus={m.status} />
-            </li>
-          ))}
+          {(matches ?? []).map((m) => {
+            const foursome = foursomesById.get(m.foursome_id);
+            const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
+            return (
+              <li key={m.id} className="flex items-center gap-2 flex-wrap">
+                <span className="text-slate-600">
+                  {session?.name ?? "—"}
+                  {foursome && ` – ${foursome.label ?? foursome.id.slice(0, 8)}`}
+                </span>
+                <Link href={`/match/${m.id}`} className="text-blue-600 hover:underline">
+                  {m.match_type === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {m.holes} holes
+                </Link>
+                <MatchStatusSelect matchId={m.id} currentStatus={m.status} />
+              </li>
+            );
+          })}
         </ul>
       </section>
     </div>

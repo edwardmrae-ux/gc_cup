@@ -37,10 +37,18 @@ export default async function MatchPage({
 
   const { data: match, error: matchErr } = await supabase
     .from("matches")
-    .select("id, foursome_id, holes, status, match_type")
+    .select("id, foursome_id, holes, status, match_type, nine")
     .eq("id", matchId)
     .single();
   if (matchErr || !match) notFound();
+
+  const holeCount = match.holes;
+  const holeNumbers =
+    holeCount === 18
+      ? Array.from({ length: 18 }, (_, i) => i + 1)
+      : match.nine === "back"
+        ? Array.from({ length: 9 }, (_, i) => i + 10)
+        : Array.from({ length: 9 }, (_, i) => i + 1);
 
   const { data: foursome } = await supabase
     .from("foursomes")
@@ -95,20 +103,20 @@ export default async function MatchPage({
     gross_score: s.gross_score,
   }));
   const stablefordConfig = config ?? [];
-  const holeCount = match.holes;
 
   let teamAPoints: number | null = null;
   let teamBPoints: number | null = null;
   let matchPlayState: string | null = null;
   if (match.match_type === "stableford_2v2") {
-    teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parByHole);
-    teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parByHole);
+    teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parByHole, holeNumbers);
+    teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parByHole, holeNumbers);
   } else if (teamAIds[0] && teamBIds[0]) {
     const { team_a, team_b } = matchPlay1v1Points(
       scoreRows,
       teamAIds[0],
       teamBIds[0],
-      holeCount
+      holeCount,
+      holeNumbers
     );
     matchPlayState =
       team_a > team_b ? "Chubbs wins" : team_b > team_a ? "McAvoy wins" : "Halved";
@@ -146,7 +154,7 @@ export default async function MatchPage({
       <ScoreEntryTable
         matchId={matchId}
         players={allPlayerIds.map((id) => ({ id, name: playersById.get(id) ?? id }))}
-        holeCount={holeCount}
+        holeNumbers={holeNumbers}
         existingScores={scoreRows}
         matchType={match.match_type}
         teamAIds={teamAIds}

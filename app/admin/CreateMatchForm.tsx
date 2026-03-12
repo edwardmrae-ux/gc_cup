@@ -16,6 +16,7 @@ export function CreateMatchForm({
   sessions: { id: string; name: string }[];
 }) {
   const [matchType, setMatchType] = useState<"stableford_2v2" | "match_play_1v1">("stableford_2v2");
+  const [nine, setNine] = useState<"front" | "back">("front");
   const [state, formAction] = useFormState(createMatch, {});
 
   const teamChubbs = teams.find((t) => t.name === "Team Chubbs")?.id;
@@ -27,6 +28,7 @@ export function CreateMatchForm({
   return (
     <form action={formAction} className="space-y-3 max-w-lg">
       <input type="hidden" name="match_type" value={matchType} />
+      <input type="hidden" name="nine" value={nine} />
       <div className="flex gap-4 flex-wrap">
         <label className="flex items-center gap-1 text-sm">
           <input
@@ -45,6 +47,26 @@ export function CreateMatchForm({
             onChange={() => setMatchType("match_play_1v1")}
           />
           1v1 Match play
+        </label>
+      </div>
+      <div className="flex gap-4 flex-wrap">
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="radio"
+            name="nine_radio"
+            checked={nine === "front"}
+            onChange={() => setNine("front")}
+          />
+          Front 9
+        </label>
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="radio"
+            name="nine_radio"
+            checked={nine === "back"}
+            onChange={() => setNine("back")}
+          />
+          Back 9
         </label>
       </div>
       <div className="flex gap-2 items-center flex-wrap">
