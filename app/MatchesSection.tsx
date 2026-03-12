@@ -4,17 +4,24 @@ import Link from "next/link";
 import { useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 
-function MatchCard({ m }: { m: LiveMatch }) {
+function MatchCard({ m, isActive }: { m: LiveMatch; isActive: boolean }) {
   return (
     <Link
       href={`/match/${m.id}`}
-      className="block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm"
+      className={`block border rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm ${
+        isActive ? "border-amber-500 ring-1 ring-amber-300" : "border-slate-200"
+      }`}
     >
       <div className="mb-3 text-center">
         <p className="font-medium text-slate-800 text-lg">
           {m.sessionName}
           {m.foursomeLabel ? ` – ${m.foursomeLabel}` : ""}
         </p>
+        {isActive && (
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+            Active round
+          </p>
+        )}
         <p className="text-sm text-slate-600">
           {m.matchType === "stableford_2v2"
             ? "2v2 Stableford"
@@ -76,9 +83,10 @@ function MatchCard({ m }: { m: LiveMatch }) {
 interface MatchesSectionProps {
   liveMatches: LiveMatch[];
   completedMatches: LiveMatch[];
+  activeSessionName?: string | null;
 }
 
-export function MatchesSection({ liveMatches, completedMatches }: MatchesSectionProps) {
+export function MatchesSection({ liveMatches, completedMatches, activeSessionName }: MatchesSectionProps) {
   const [activeTab, setActiveTab] = useState<"live" | "completed">(
     liveMatches.length > 0 ? "live" : "completed"
   );
@@ -122,11 +130,16 @@ export function MatchesSection({ liveMatches, completedMatches }: MatchesSection
         </div>
       </div>
       <ul className="space-y-3">
-        {matches.map((m) => (
-          <li key={m.id}>
-            <MatchCard m={m} />
-          </li>
-        ))}
+        {matches.map((m) => {
+          const isActive =
+            !!activeSessionName &&
+            m.sessionName.toLowerCase().trim() === activeSessionName.toLowerCase().trim();
+          return (
+            <li key={m.id}>
+              <MatchCard m={m} isActive={isActive} />
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

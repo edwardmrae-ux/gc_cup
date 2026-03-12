@@ -1,13 +1,29 @@
 import Link from "next/link";
 import { getTeamTotals, getInProgressMatches, getAllMatches } from "@/lib/leaderboard";
 import { MatchesSection } from "./MatchesSection";
+import { getActiveSessionId } from "@/lib/activeSessionStore";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function LeaderboardPage() {
-  const [totals, liveMatches, allMatches] = await Promise.all([
+  const supabase = await createClient();
+
+  const [totals, liveMatches, allMatches, activeSessionId] = await Promise.all([
     getTeamTotals(),
     getInProgressMatches(),
     getAllMatches(),
+    getActiveSessionId(),
   ]);
+
+  let activeSessionName: string | null = null;
+
+  if (activeSessionId) {
+    const { data: session } = await supabase
+      .from("sessions")
+      .select("id, name")
+      .eq("id", activeSessionId)
+      .maybeSingle();
+    activeSessionName = (session as any)?.name ?? null;
+  }
 
   const completedMatches = allMatches.filter((m) => m.status === "complete");
 
@@ -34,6 +50,7 @@ export default async function LeaderboardPage() {
         <MatchesSection
           liveMatches={liveMatches}
           completedMatches={completedMatches}
+          activeSessionName={activeSessionName}
         />
       )}
 

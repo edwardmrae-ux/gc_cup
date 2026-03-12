@@ -2,6 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveSessionId, setActiveSessionId } from "@/lib/activeSessionStore";
 
 const ADMIN_COOKIE_NAME = "gc_admin_pin";
 
@@ -44,8 +46,6 @@ export async function checkAdminCookie(): Promise<boolean> {
   const cookieStore = await cookies();
   return cookieStore.get(ADMIN_COOKIE_NAME)?.value === "1";
 }
-
-import { createClient } from "@/lib/supabase/server";
 
 export async function addPlayer(_prev: { error?: string }, formData: FormData) {
   const supabase = await createClient();
@@ -133,5 +133,31 @@ export async function updateMatchStatus(matchId: string, status: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("matches").update({ status }).eq("id", matchId);
   if (error) return { error: error.message };
+  return {};
+}
+
+export async function setActiveSessionAction(sessionId: string | null) {
+  const supabase = await createClient();
+
+  if (sessionId === null) {
+    await setActiveSessionId(null);
+    return {};
+  }
+
+  const { data: session, error } = await supabase
+    .from("sessions")
+    .select("id")
+    .eq("id", sessionId)
+    .maybeSingle();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (!session) {
+    return { error: "Session not found" };
+  }
+
+  await setActiveSessionId(session.id);
   return {};
 }

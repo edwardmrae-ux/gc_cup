@@ -4,6 +4,8 @@ import { CreateSessionForm } from "./CreateSessionForm";
 import { CreateFoursomeForm } from "./CreateFoursomeForm";
 import { CreateMatchForm } from "./CreateMatchForm";
 import { MatchStatusSelect } from "./MatchStatusSelect";
+import { ActiveSessionSelect } from "./ActiveSessionSelect";
+import { getActiveSessionId } from "@/lib/activeSessionStore";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -26,6 +28,8 @@ export default async function AdminPage() {
     supabase.from("foursomes").select("id, session_id, label").order("session_id"),
     supabase.from("matches").select("id, foursome_id, holes, status, match_type").order("id"),
   ]);
+
+  const activeSessionId = await getActiveSessionId();
 
   const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
   const coursesById = new Map((courses ?? []).map((c) => [c.id, c]));
@@ -65,6 +69,7 @@ export default async function AdminPage() {
             </li>
           ))}
         </ul>
+        <ActiveSessionSelect sessions={(sessions ?? []) as any} activeSessionId={activeSessionId} />
       </section>
 
       <section>
