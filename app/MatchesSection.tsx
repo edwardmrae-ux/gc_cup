@@ -73,12 +73,13 @@ function MatchCard({ m }: { m: LiveMatch }) {
   );
 }
 
-type MatchTab = "live" | "completed" | "upcoming";
+type MatchTab = "live" | "completed" | "upcoming" | "all";
 
 interface MatchesSectionProps {
   liveMatches: LiveMatch[];
   completedMatches: LiveMatch[];
   upcomingMatches: LiveMatch[];
+  allMatches: LiveMatch[];
 }
 
 function getInitialTab(
@@ -95,6 +96,7 @@ export function MatchesSection({
   liveMatches,
   completedMatches,
   upcomingMatches,
+  allMatches,
 }: MatchesSectionProps) {
   const [activeTab, setActiveTab] = useState<MatchTab>(() =>
     getInitialTab(liveMatches, completedMatches, upcomingMatches)
@@ -105,7 +107,9 @@ export function MatchesSection({
       ? liveMatches
       : activeTab === "upcoming"
         ? upcomingMatches
-        : completedMatches;
+        : activeTab === "all"
+          ? allMatches
+          : completedMatches;
 
   return (
     <section>
@@ -153,6 +157,19 @@ export function MatchesSection({
             }`}
           >
             Upcoming
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "all"}
+            onClick={() => setActiveTab("all")}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === "all"
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-600 hover:text-slate-800"
+            }`}
+          >
+            All
           </button>
         </div>
       </div>

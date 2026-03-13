@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getTeamTotals, getAllMatches, partitionMatchesBySessionAndStatus } from "@/lib/leaderboard";
 import { MatchesSection } from "./MatchesSection";
 import { getActiveSessionId } from "@/lib/activeSessionStore";
@@ -34,43 +33,13 @@ export default async function LeaderboardPage() {
         </div>
       </section>
 
-      {(liveMatches.length > 0 || completedMatches.length > 0 || upcomingMatches.length > 0) && (
+      {allMatches.length > 0 && (
         <MatchesSection
           liveMatches={liveMatches}
           completedMatches={completedMatches}
           upcomingMatches={upcomingMatches}
+          allMatches={allMatches}
         />
-      )}
-
-      {allMatches.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold text-slate-700 mb-3">All matches</h2>
-          <ul className="space-y-2">
-            {allMatches.map((m) => (
-              <li key={m.id}>
-                <Link
-                  href={`/match/${m.id}`}
-                  className="block border border-slate-200 rounded-lg p-3 bg-white hover:bg-slate-50 text-sm"
-                >
-                  <span className="font-medium text-slate-800">
-                    {m.sessionName}
-                    {m.foursomeLabel ? ` – ${m.foursomeLabel}` : ""}
-                  </span>
-                  <span className="text-slate-500 ml-2">
-                    {m.matchType === "stableford_2v2" ? "2v2" : "1v1"} · {m.holes} holes · {m.status.replace("_", " ")}
-                  </span>
-                  {(m.teamAPoints != null || m.matchPlayState) && (
-                    <span className="ml-2 font-medium">
-                      {m.matchType === "stableford_2v2"
-                        ? `${m.teamAPoints ?? 0}–${m.teamBPoints ?? 0}`
-                        : m.matchPlayState}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
       )}
 
       <p className="text-sm text-slate-500">
