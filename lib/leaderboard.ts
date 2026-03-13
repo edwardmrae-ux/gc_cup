@@ -23,6 +23,36 @@ export interface LiveMatch {
   teamBPoints?: number;
   matchPlayState?: string;
   playerNames?: { team_a: string[]; team_b: string[] };
+  holesCompleted?: number;
+}
+
+function computeHolesCompleted(
+  scoreRows: HoleScoreRow[],
+  playerIds: string[],
+  holeNumbers: number[]
+): number {
+  if (playerIds.length === 0 || holeNumbers.length === 0) return 0;
+
+  let completed = 0;
+
+  for (const holeNumber of holeNumbers) {
+    const allPlayersHaveScore = playerIds.every((playerId) =>
+      scoreRows.some(
+        (row) =>
+          row.player_id === playerId &&
+          row.hole_number === holeNumber &&
+          row.gross_score != null
+      )
+    );
+
+    if (!allPlayersHaveScore) {
+      break;
+    }
+
+    completed += 1;
+  }
+
+  return completed;
 }
 
 export function partitionMatchesBySessionAndStatus(
@@ -238,8 +268,12 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
       ? await supabase.from("players").select("id, name").in("id", matchPlayers.map((mp) => mp.player_id))
       : { data: [] };
     const playersById = new Map((players ?? []).map((p) => [p.id, p.name]));
-    const teamAIds = (matchPlayers ?? []).filter((p) => p.side === "team_a").map((p) => p.player_id);
-    const teamBIds = (matchPlayers ?? []).filter((p) => p.side === "team_b").map((p) => p.player_id);
+    const teamAIds = (matchPlayers ?? [])
+      .filter((p) => p.side === "team_a")
+      .map((p) => p.player_id);
+    const teamBIds = (matchPlayers ?? [])
+      .filter((p) => p.side === "team_b")
+      .map((p) => p.player_id);
 
     const { data: scores } = await supabase
       .from("hole_scores")
@@ -257,6 +291,9 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
         : m.nine === "back"
           ? Array.from({ length: 9 }, (_, i) => i + 10)
           : Array.from({ length: 9 }, (_, i) => i + 1);
+
+    const allPlayerIds = [...teamAIds, ...teamBIds];
+    const holesCompleted = computeHolesCompleted(scoreRows, allPlayerIds, holeNumbers);
 
     let teamAPoints: number | undefined;
     let teamBPoints: number | undefined;
@@ -276,12 +313,12 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
           m.holes,
           holeNumbers
         );
-        matchPlayState =
-          team_a > team_b
-            ? "Chubbs leads"
-            : team_b > team_a
-              ? "McAvoy leads"
-              : "All square";
+      matchPlayState =
+        team_a > team_b
+          ? "Chubbs leads"
+          : team_b > team_a
+            ? "McAvoy leads"
+            : "All square";
       }
     }
 
@@ -296,6 +333,7 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
       teamAPoints,
       teamBPoints,
       matchPlayState,
+      holesCompleted,
       playerNames: {
         team_a: teamAIds.map((id) => playersById.get(id) ?? ""),
         team_b: teamBIds.map((id) => playersById.get(id) ?? ""),
@@ -376,8 +414,12 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
       .from("match_players")
       .select("player_id, side")
       .eq("match_id", m.id);
-    const teamAIds = (matchPlayers ?? []).filter((p) => p.side === "team_a").map((p) => p.player_id);
-    const teamBIds = (matchPlayers ?? []).filter((p) => p.side === "team_b").map((p) => p.player_id);
+    const teamAIds = (matchPlayers ?? [])
+      .filter((p) => p.side === "team_a")
+      .map((p) => p.player_id);
+    const teamBIds = (matchPlayers ?? [])
+      .filter((p) => p.side === "team_b")
+      .map((p) => p.player_id);
     const { data: players } = matchPlayers?.length
       ? await supabase.from("players").select("id, name").in("id", matchPlayers.map((mp) => mp.player_id))
       : { data: [] };
@@ -399,6 +441,9 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
         : m.nine === "back"
           ? Array.from({ length: 9 }, (_, i) => i + 10)
           : Array.from({ length: 9 }, (_, i) => i + 1);
+
+    const allPlayerIds = [...teamAIds, ...teamBIds];
+    const holesCompleted = computeHolesCompleted(scoreRows, allPlayerIds, holeNumbers);
 
     let teamAPoints: number | undefined;
     let teamBPoints: number | undefined;
@@ -429,6 +474,7 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
       teamAPoints,
       teamBPoints,
       matchPlayState,
+      holesCompleted,
       playerNames: {
         team_a: teamAIds.map((id) => playersById.get(id) ?? ""),
         team_b: teamBIds.map((id) => playersById.get(id) ?? ""),

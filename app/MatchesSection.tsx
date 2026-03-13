@@ -5,6 +5,13 @@ import { useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 
 function MatchCard({ m }: { m: LiveMatch }) {
+  const holesLabel =
+    m.holesCompleted != null && m.holesCompleted >= m.holes
+      ? "Match Complete"
+      : m.holesCompleted != null && m.holesCompleted > 0
+        ? `Thru ${m.holesCompleted}`
+        : null;
+
   return (
     <Link
       href={`/match/${m.id}`}
@@ -16,11 +23,13 @@ function MatchCard({ m }: { m: LiveMatch }) {
           {m.foursomeLabel ? ` – ${m.foursomeLabel}` : ""}
         </p>
         <p className="text-sm text-slate-600">
-          {m.matchType === "stableford_2v2"
-            ? "2v2 Stableford"
-            : "1v1 Match play"}{" "}
-          – {m.holes} holes
+          {m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {m.holes} holes
         </p>
+        {holesLabel && (
+          <p className="text-xs text-slate-500 mt-1">
+            {holesLabel}
+          </p>
+        )}
       </div>
       <div className="flex divide-x divide-slate-200">
         <div className="flex-1 px-3">
