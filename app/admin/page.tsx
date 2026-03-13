@@ -25,7 +25,10 @@ export default async function AdminPage() {
       .from("sessions")
       .select("id, name, session_date, counts_for_team_competition, course_id")
       .order("session_date"),
-    supabase.from("foursomes").select("id, session_id, label").order("session_id"),
+    supabase
+      .from("foursomes")
+      .select("id, session_id, label, sort")
+      .order("session_id"),
     supabase.from("matches").select("id, foursome_id, holes, status, match_type").order("id"),
   ]);
 
@@ -34,6 +37,13 @@ export default async function AdminPage() {
   const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
   const coursesById = new Map((courses ?? []).map((c) => [c.id, c]));
   const foursomesById = new Map((foursomes ?? []).map((f) => [f.id, f]));
+
+  const sortedMatches = [...(matches ?? [])].sort((a, b) => {
+    const sortA = (foursomesById.get(a.foursome_id) as any)?.sort ?? 0;
+    const sortB = (foursomesById.get(b.foursome_id) as any)?.sort ?? 0;
+    if (sortA !== sortB) return sortA - sortB;
+    return a.id.localeCompare(b.id);
+  });
 
   return (
     <div className="space-y-10">
@@ -93,7 +103,7 @@ export default async function AdminPage() {
           sessions={sessions ?? []}
         />
         <ul className="mt-3 space-y-2 text-sm">
-          {(matches ?? []).map((m) => {
+          {sortedMatches.map((m) => {
             const foursome = foursomesById.get(m.foursome_id);
             const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
             return (
