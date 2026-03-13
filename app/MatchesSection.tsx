@@ -160,7 +160,7 @@ export function MatchesSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold text-slate-700">Matches</h2>
           <div
             role="tablist"
