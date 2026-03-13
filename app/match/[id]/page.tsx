@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   stablefordTotal,
-  matchPlay1v1Points,
+  matchPlay1v1HolesWon,
 } from "@/lib/team-points";
 import { ScoreEntryTable } from "./ScoreEntryTable";
 import { MatchStatusActions } from "./MatchStatusActions";
@@ -106,20 +106,28 @@ export default async function MatchPage({
 
   let teamAPoints: number | null = null;
   let teamBPoints: number | null = null;
-  let matchPlayState: string | null = null;
+  let matchPlayHeader: string | null = null;
   if (match.match_type === "stableford_2v2") {
     teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parByHole, holeNumbers);
     teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parByHole, holeNumbers);
-  } else if (teamAIds[0] && teamBIds[0]) {
-    const { team_a, team_b } = matchPlay1v1Points(
+  } else if (match.match_type === "match_play_1v1" && teamAIds[0] && teamBIds[0]) {
+    const { holesA, holesB } = matchPlay1v1HolesWon(
       scoreRows,
       teamAIds[0],
       teamBIds[0],
       holeCount,
       holeNumbers
     );
-    matchPlayState =
-      team_a > team_b ? "Chubbs wins" : team_b > team_a ? "McAvoy wins" : "Halved";
+    const margin = Math.abs(holesA - holesB);
+    if (match.status === "complete") {
+      if (holesA > holesB) matchPlayHeader = `Team Chubbs wins by ${margin}.`;
+      else if (holesB > holesA) matchPlayHeader = `Team McAvoy wins by ${margin}.`;
+      else matchPlayHeader = "Tied.";
+    } else {
+      if (holesA > holesB) matchPlayHeader = `Team Chubbs leads by ${margin}.`;
+      else if (holesB > holesA) matchPlayHeader = `Team McAvoy leads by ${margin}.`;
+      else matchPlayHeader = "All Square.";
+    }
   }
 
   const allPlayerIds = [...teamAIds, ...teamBIds];
@@ -140,13 +148,13 @@ export default async function MatchPage({
       </h1>
       <p className="text-slate-600 capitalize">{match.status.replace("_", " ")}</p>
 
-      {(teamAPoints !== null || matchPlayState) && (
+      {(teamAPoints !== null || matchPlayHeader) && (
         <div className="flex gap-6 text-lg font-semibold">
           {match.match_type === "stableford_2v2" && (
             <p>Team Chubbs {teamAPoints ?? 0} – Team McAvoy {teamBPoints ?? 0}</p>
           )}
-          {match.match_type === "match_play_1v1" && matchPlayState && (
-            <p>{matchPlayState}</p>
+          {match.match_type === "match_play_1v1" && matchPlayHeader && (
+            <p>{matchPlayHeader}</p>
           )}
         </div>
       )}

@@ -104,3 +104,31 @@ export function matchPlay1v1Points(
   if (winsB > winsA) return { team_a: 0, team_b: 1 };
   return { team_a: 0.5, team_b: 0.5 };
 }
+
+/**
+ * Match play 1v1: return number of holes won by each side (for display: "leads by N" / "wins by N").
+ * Same inputs as matchPlay1v1Points. When holeNumbers is provided (e.g. [10..18] for back 9), only those holes are counted.
+ */
+export function matchPlay1v1HolesWon(
+  scores: HoleScoreRow[],
+  teamAPlayerId: string,
+  teamBPlayerId: string,
+  holeCount: number,
+  holeNumbers?: number[]
+): { holesA: number; holesB: number } {
+  let holesA = 0;
+  let holesB = 0;
+  const holesToCount = holeNumbers ?? Array.from({ length: holeCount }, (_, i) => i + 1);
+  for (const h of holesToCount) {
+    const sA = scores.find(
+      (s) => s.player_id === teamAPlayerId && s.hole_number === h
+    );
+    const sB = scores.find(
+      (s) => s.player_id === teamBPlayerId && s.hole_number === h
+    );
+    const winner = matchPlayHoleWinner(sA?.gross_score, sB?.gross_score);
+    if (winner === "team_a") holesA++;
+    else if (winner === "team_b") holesB++;
+  }
+  return { holesA, holesB };
+}
