@@ -91,6 +91,13 @@ interface MatchesSectionProps {
   allMatches: LiveMatch[];
 }
 
+type MatchState = {
+  liveMatches: LiveMatch[];
+  completedMatches: LiveMatch[];
+  upcomingMatches: LiveMatch[];
+  allMatches: LiveMatch[];
+};
+
 function getInitialTab(
   liveMatches: LiveMatch[],
   completedMatches: LiveMatch[],
@@ -110,77 +117,117 @@ export function MatchesSection({
   const [activeTab, setActiveTab] = useState<MatchTab>(() =>
     getInitialTab(liveMatches, completedMatches, upcomingMatches)
   );
+  const [matchState, setMatchState] = useState<MatchState>({
+    liveMatches,
+    completedMatches,
+    upcomingMatches,
+    allMatches,
+  });
+  const [refreshing, setRefreshing] = useState(false);
 
   const matches =
     activeTab === "live"
-      ? liveMatches
+      ? matchState.liveMatches
       : activeTab === "upcoming"
-        ? upcomingMatches
+        ? matchState.upcomingMatches
         : activeTab === "all"
-          ? allMatches
-          : completedMatches;
+          ? matchState.allMatches
+          : matchState.completedMatches;
+
+  async function handleRefresh() {
+    try {
+      setRefreshing(true);
+      const res = await fetch("/api/matches");
+      if (!res.ok) {
+        console.error("Failed to refresh matches", await res.text());
+        return;
+      }
+
+      const data = (await res.json()) as MatchState;
+      setMatchState({
+        liveMatches: data.liveMatches,
+        completedMatches: data.completedMatches,
+        upcomingMatches: data.upcomingMatches,
+        allMatches: data.allMatches,
+      });
+    } catch (error) {
+      console.error("Error refreshing matches", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-slate-700">Matches</h2>
-        <div
-          role="tablist"
-          className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "live"}
-            onClick={() => setActiveTab("live")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeTab === "live"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-600 hover:text-slate-800"
-            }`}
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-slate-700">Matches</h2>
+          <div
+            role="tablist"
+            className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
           >
-            Live
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "completed"}
-            onClick={() => setActiveTab("completed")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeTab === "completed"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-600 hover:text-slate-800"
-            }`}
-          >
-            Completed
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "upcoming"}
-            onClick={() => setActiveTab("upcoming")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeTab === "upcoming"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-600 hover:text-slate-800"
-            }`}
-          >
-            Upcoming
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "all"}
-            onClick={() => setActiveTab("all")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeTab === "all"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-600 hover:text-slate-800"
-            }`}
-          >
-            All
-          </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "live"}
+              onClick={() => setActiveTab("live")}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                activeTab === "live"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Live
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "completed"}
+              onClick={() => setActiveTab("completed")}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                activeTab === "completed"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Completed
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "upcoming"}
+              onClick={() => setActiveTab("upcoming")}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                activeTab === "upcoming"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Upcoming
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "all"}
+              onClick={() => setActiveTab("all")}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                activeTab === "all"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              All
+            </button>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+        >
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
       </div>
       {matches.length === 0 ? (
         <p className="text-sm text-slate-500 py-4">No matches in this category yet.</p>
