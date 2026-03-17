@@ -4,7 +4,25 @@ import Link from "next/link";
 import { useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 
+function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
+  if (m.status !== "complete") return null;
+  if (m.matchType === "stableford_2v2") {
+    const a = m.teamAPoints ?? 0;
+    const b = m.teamBPoints ?? 0;
+    if (a > b) return "chubbs";
+    if (b > a) return "mcavoy";
+    return null;
+  }
+  if (m.matchType === "match_play_1v1") {
+    if (m.matchPlayState === "Chubbs leads") return "chubbs";
+    if (m.matchPlayState === "McAvoy leads") return "mcavoy";
+    return null;
+  }
+  return null;
+}
+
 function MatchCard({ m }: { m: LiveMatch }) {
+  const winner = getWinner(m);
   const holesLabel =
     m.holesCompleted != null && m.holesCompleted >= m.holes
       ? "Match Complete"
@@ -12,31 +30,39 @@ function MatchCard({ m }: { m: LiveMatch }) {
         ? `Thru ${m.holesCompleted}`
         : null;
 
+  const cardClasses =
+    winner === "chubbs"
+      ? "block border border-white/30 rounded-lg p-4 bg-[#1F5E3B] hover:opacity-95 shadow-sm text-white"
+      : winner === "mcavoy"
+        ? "block border border-white/30 rounded-lg p-4 bg-[#C65D1E] hover:opacity-95 shadow-sm text-white"
+        : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
+
+  const textPrimary = winner ? "text-white" : "text-slate-800";
+  const textSecondary = winner ? "text-white/90" : "text-slate-600";
+  const textMuted = winner ? "text-white/80" : "text-slate-500";
+  const textBold = winner ? "text-white" : "text-slate-900";
+  const divideClass = winner ? "divide-white/30" : "divide-slate-200";
+
   return (
-    <Link
-      href={`/match/${m.id}`}
-      className="block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm"
-    >
+    <Link href={`/match/${m.id}`} className={cardClasses}>
       <div className="mb-3 text-center">
-        <p className="font-medium text-slate-800 text-lg">
-          {m.sessionName}
-          {m.foursomeLabel ? ` – ${m.foursomeLabel}` : ""}
+        <p className={`font-medium ${textPrimary} text-lg`}>
+          {m.sessionName} – Match {m.matchNum ?? "—"}
         </p>
-        <p className="text-sm text-slate-600">
-          {m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {m.holes} holes
+        <p className={`text-sm ${textSecondary}`}>
+          {m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"}
+          {m.nine === "front" ? " – Front 9" : m.nine === "back" ? " – Back 9" : " – 9 holes"}
         </p>
         {holesLabel && (
-          <p className="text-xs text-slate-500 mt-1">
-            {holesLabel}
-          </p>
+          <p className={`text-xs ${textMuted} mt-1`}>{holesLabel}</p>
         )}
       </div>
-      <div className="flex divide-x divide-slate-200">
+      <div className={`flex divide-x ${divideClass}`}>
         <div className="flex-1 px-3">
           <div className="mb-2">
-            <p className="font-bold text-slate-900">Team Chubbs</p>
+            <p className={`font-bold ${textBold}`}>Team Chubbs</p>
             {m.playerNames && (
-              <ul className="text-xs text-slate-600 mt-1">
+              <ul className={`text-xs ${textSecondary} mt-1`}>
                 {m.playerNames.team_a.map((name: string, idx: number) => (
                   <li key={idx}>{name}</li>
                 ))}
@@ -45,14 +71,14 @@ function MatchCard({ m }: { m: LiveMatch }) {
           </div>
           {m.matchType === "stableford_2v2" && (
             <div>
-              <p className="text-2xl font-bold text-slate-800">
+              <p className={`text-2xl font-bold ${textPrimary}`}>
                 {m.teamAPoints ?? 0}
               </p>
             </div>
           )}
           {m.matchType === "match_play_1v1" && m.matchPlayState && (
             <div>
-              <p className="text-lg font-semibold text-slate-800">
+              <p className={`text-lg font-semibold ${textPrimary}`}>
                 {m.matchPlayState}
               </p>
             </div>
@@ -60,9 +86,9 @@ function MatchCard({ m }: { m: LiveMatch }) {
         </div>
         <div className="flex-1 px-3">
           <div className="mb-2 text-right">
-            <p className="font-bold text-slate-900">Team McAvoy</p>
+            <p className={`font-bold ${textBold}`}>Team McAvoy</p>
             {m.playerNames && (
-              <ul className="text-xs text-slate-600 mt-1">
+              <ul className={`text-xs ${textSecondary} mt-1`}>
                 {m.playerNames.team_b.map((name: string, idx: number) => (
                   <li key={idx}>{name}</li>
                 ))}
@@ -71,7 +97,7 @@ function MatchCard({ m }: { m: LiveMatch }) {
           </div>
           {m.matchType === "stableford_2v2" && (
             <div className="text-right">
-              <p className="text-2xl font-bold text-slate-800">
+              <p className={`text-2xl font-bold ${textPrimary}`}>
                 {m.teamBPoints ?? 0}
               </p>
             </div>

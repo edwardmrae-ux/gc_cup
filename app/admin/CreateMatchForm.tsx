@@ -89,6 +89,17 @@ export function CreateMatchForm({
           <option value="in_progress">In progress</option>
           <option value="complete">Complete</option>
         </select>
+        <span className="text-sm text-slate-600">Match #</span>
+        <input
+          type="number"
+          name="match_num"
+          min={1}
+          step={1}
+          required
+          placeholder="e.g. 1"
+          className="px-3 py-2 border border-slate-300 rounded text-sm w-24"
+          aria-label="Match number"
+        />
       </div>
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>

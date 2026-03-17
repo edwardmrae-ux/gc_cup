@@ -24,6 +24,8 @@ export interface LiveMatch {
   matchPlayState?: string;
   playerNames?: { team_a: string[]; team_b: string[] };
   holesCompleted?: number;
+  matchNum?: number;
+  nine?: "front" | "back" | null;
 }
 
 function computeHolesCompleted(
@@ -197,7 +199,7 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
   const supabase = await createClient();
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, foursome_id, match_type, holes, status, nine")
+    .select("id, foursome_id, match_type, holes, status, nine, match_num")
     .eq("status", "in_progress");
   if (!matches?.length) return [];
 
@@ -334,6 +336,8 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
       teamBPoints,
       matchPlayState,
       holesCompleted,
+      matchNum: m.match_num,
+      nine: m.nine ?? null,
       playerNames: {
         team_a: teamAIds.map((id) => playersById.get(id) ?? ""),
         team_b: teamBIds.map((id) => playersById.get(id) ?? ""),
@@ -345,11 +349,19 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
 }
 
 export async function getAllMatches(): Promise<LiveMatch[]> {
+  // #region agent log
+  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:getAllMatches',message:'getAllMatches entry',data:{},timestamp:Date.now(),hypothesisId:'entry'})}).catch(()=>{});
+  // #endregion
   const supabase = await createClient();
-  const { data: matches } = await supabase
+  const matchesResult = await supabase
     .from("matches")
-    .select("id, foursome_id, match_type, holes, status, nine")
+    .select("id, foursome_id, match_type, holes, status, nine, match_num")
     .order("id");
+  const matches = matchesResult.data;
+  const matchesError = matchesResult.error;
+  // #region agent log
+  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:after matches query',message:'matches query result',data:{matchesLength:matches?.length ?? 0,matchesError:matchesError?.message ?? null,hasData:!!matches},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+  // #endregion
   if (!matches?.length) return [];
 
   const { data: config } = await supabase
@@ -364,21 +376,39 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     .in("id", foursomeIds);
   const foursomesById = new Map((foursomes ?? []).map((f) => [f.id, f]));
 
-  const sortedMatches = [...matches].sort((a, b) => {
-    const sortA = foursomesById.get(a.foursome_id)?.sort ?? 0;
-    const sortB = foursomesById.get(b.foursome_id)?.sort ?? 0;
-    if (sortA !== sortB) return sortA - sortB;
-    return a.id.localeCompare(b.id);
-  });
-
   const sessionIds = Array.from(
     new Set((foursomes ?? []).map((f: any) => f.session_id as string))
   );
-  const { data: sessions } = await supabase
+  const sessionsResult = await supabase
     .from("sessions")
-    .select("id, name, course_id")
+    .select("id, name, course_id, sort")
     .in("id", sessionIds);
+  const sessions = sessionsResult.data;
+  const sessionsError = sessionsResult.error;
+  // #region agent log
+  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:after sessions query',message:'sessions query result',data:{sessionsLength:sessions?.length ?? 0,sessionsError:sessionsError?.message ?? null,hasData:!!sessions},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+  // #endregion
   const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
+
+  const sortedMatches = [...matches].sort((a, b) => {
+    const foursomeA = foursomesById.get(a.foursome_id);
+    const foursomeB = foursomesById.get(b.foursome_id);
+    const sessionSortA = foursomeA
+      ? (sessionsById.get(foursomeA.session_id) as { sort?: number | null } | undefined)?.sort ?? 0
+      : 0;
+    const sessionSortB = foursomeB
+      ? (sessionsById.get(foursomeB.session_id) as { sort?: number | null } | undefined)?.sort ?? 0
+      : 0;
+    if (sessionSortA !== sessionSortB) return sessionSortA - sessionSortB;
+    const matchNumA = a.match_num ?? 0;
+    const matchNumB = b.match_num ?? 0;
+    if (matchNumA !== matchNumB) return matchNumA - matchNumB;
+    return a.id.localeCompare(b.id);
+  });
+
+  // #region agent log
+  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:getAllMatches after sort',message:'sortedMatches length',data:{sortedMatchesLength:sortedMatches.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+  // #endregion
 
   const courseIds = Array.from(
     new Set(
@@ -475,11 +505,16 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
       teamBPoints,
       matchPlayState,
       holesCompleted,
+      matchNum: m.match_num,
+      nine: m.nine ?? null,
       playerNames: {
         team_a: teamAIds.map((id) => playersById.get(id) ?? ""),
         team_b: teamBIds.map((id) => playersById.get(id) ?? ""),
       },
     });
   }
+  // #region agent log
+  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:getAllMatches return',message:'result length',data:{resultLength:result.length},timestamp:Date.now(),hypothesisId:'exit'})}).catch(()=>{});
+  // #endregion
   return result;
 }

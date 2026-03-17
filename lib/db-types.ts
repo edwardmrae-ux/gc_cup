@@ -17,6 +17,7 @@ export interface Session {
   name: string;
   session_date: string;
   counts_for_team_competition: boolean;
+  sort?: number | null;
 }
 
 export interface Foursome {
@@ -32,6 +33,7 @@ export interface Match {
   holes: number;
   status: MatchStatus;
   match_type: MatchType;
+  sort?: number | null;
 }
 
 export interface MatchPlayer {

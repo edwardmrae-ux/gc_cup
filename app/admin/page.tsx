@@ -29,7 +29,7 @@ export default async function AdminPage() {
       .from("foursomes")
       .select("id, session_id, label, sort")
       .order("session_id"),
-    supabase.from("matches").select("id, foursome_id, holes, status, match_type").order("id"),
+    supabase.from("matches").select("id, foursome_id, holes, status, match_type, match_num").order("id"),
   ]);
 
   const activeSessionId = await getActiveSessionId();
@@ -113,7 +113,7 @@ export default async function AdminPage() {
                   {foursome && ` – ${foursome.label ?? foursome.id.slice(0, 8)}`}
                 </span>
                 <Link href={`/match/${m.id}`} className="text-blue-600 hover:underline">
-                  {m.match_type === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {m.holes} holes
+                  Match #{m.match_num ?? "—"} – {m.match_type === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {m.holes} holes
                 </Link>
                 <MatchStatusSelect matchId={m.id} currentStatus={m.status} />
               </li>

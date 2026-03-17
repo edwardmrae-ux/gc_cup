@@ -95,12 +95,15 @@ export async function createMatch(_prev: { error?: string }, formData: FormData)
   const match_type = formData.get("match_type") as string;
   const nineRaw = formData.get("nine") as string | null;
   const nine = nineRaw === "front" || nineRaw === "back" ? nineRaw : null;
+  const matchNumRaw = formData.get("match_num");
+  const match_num = matchNumRaw != null && matchNumRaw !== "" ? parseInt(String(matchNumRaw), 10) : NaN;
   const team_a_1 = formData.get("team_a_player_1") as string | null;
   const team_a_2 = formData.get("team_a_player_2") as string | null;
   const team_b_1 = formData.get("team_b_player_1") as string | null;
   const team_b_2 = formData.get("team_b_player_2") as string | null;
   if (!foursome_id || !match_type) return { error: "Foursome and match type required" };
   if (!nine) return { error: "Front or Back 9 is required" };
+  if (Number.isNaN(match_num) || match_num < 1) return { error: "Match number must be a valid integer (1 or greater)" };
   if (match_type === "stableford_2v2" && (!team_a_1 || !team_a_2 || !team_b_1 || !team_b_2)) {
     return { error: "All four players required for 2v2" };
   }
@@ -115,6 +118,7 @@ export async function createMatch(_prev: { error?: string }, formData: FormData)
       status,
       match_type: match_type as "stableford_2v2" | "match_play_1v1",
       nine,
+      match_num,
     })
     .select("id")
     .single();
