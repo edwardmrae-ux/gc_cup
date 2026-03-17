@@ -21,8 +21,27 @@ function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
   return null;
 }
 
+function getCurrentLeader(m: LiveMatch): "chubbs" | "mcavoy" | null {
+  if (m.matchType === "stableford_2v2") {
+    const a = m.teamAPoints;
+    const b = m.teamBPoints;
+    if (typeof a === "number" && typeof b === "number") {
+      if (a > b) return "chubbs";
+      if (b > a) return "mcavoy";
+    }
+    return null;
+  }
+  if (m.matchType === "match_play_1v1") {
+    if (m.matchPlayState === "Chubbs leads") return "chubbs";
+    if (m.matchPlayState === "McAvoy leads") return "mcavoy";
+    return null;
+  }
+  return null;
+}
+
 function MatchCard({ m }: { m: LiveMatch }) {
   const winner = getWinner(m);
+  const leader = getCurrentLeader(m);
   const holesLabel =
     m.holesCompleted != null && m.holesCompleted >= m.holes
       ? "Match Complete"
@@ -30,17 +49,23 @@ function MatchCard({ m }: { m: LiveMatch }) {
         ? `Thru ${m.holesCompleted}`
         : null;
 
+  const hasColor = !!winner || (m.status === "in_progress" && !!leader);
+
   const cardClasses =
     winner === "chubbs"
       ? "block border border-white/30 rounded-lg p-4 bg-[#1F5E3B] hover:opacity-95 shadow-sm text-white"
       : winner === "mcavoy"
         ? "block border border-white/30 rounded-lg p-4 bg-[#C65D1E] hover:opacity-95 shadow-sm text-white"
-        : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
+        : m.status === "in_progress" && leader === "chubbs"
+          ? "block border border-white/30 rounded-lg p-4 bg-[rgba(31,94,59,0.66)] hover:opacity-95 shadow-sm text-white"
+          : m.status === "in_progress" && leader === "mcavoy"
+            ? "block border border-white/30 rounded-lg p-4 bg-[rgba(198,93,30,0.66)] hover:opacity-95 shadow-sm text-white"
+            : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
 
-  const textPrimary = winner ? "text-white" : "text-slate-800";
-  const textSecondary = winner ? "text-white/90" : "text-slate-600";
-  const textMuted = winner ? "text-white/80" : "text-slate-500";
-  const textBold = winner ? "text-white" : "text-slate-900";
+  const textPrimary = hasColor ? "text-white" : "text-slate-800";
+  const textSecondary = hasColor ? "text-white/90" : "text-slate-600";
+  const textMuted = hasColor ? "text-white/80" : "text-slate-500";
+  const textBold = hasColor ? "text-white" : "text-slate-900";
 
   const matchTypeLabel =
     m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play";
