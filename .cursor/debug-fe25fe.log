@@ -63,3 +63,23 @@
 {"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":2,"sessionsError":null,"hasData":true},"timestamp":1773629876806,"hypothesisId":"H2"}
 {"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":6},"timestamp":1773629876807,"hypothesisId":"H4"}
 {"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":6},"timestamp":1773629877746,"hypothesisId":"exit"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1773773057749,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after matches query","message":"matches query result","data":{"matchesLength":6,"matchesError":null,"hasData":true},"timestamp":1773773058353,"hypothesisId":"H1"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":2,"sessionsError":null,"hasData":true},"timestamp":1773773058583,"hypothesisId":"H2"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":6},"timestamp":1773773058584,"hypothesisId":"H4"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":6},"timestamp":1773773059765,"hypothesisId":"exit"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1773773398658,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after matches query","message":"matches query result","data":{"matchesLength":6,"matchesError":null,"hasData":true},"timestamp":1773773398914,"hypothesisId":"H1"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":2,"sessionsError":null,"hasData":true},"timestamp":1773773399128,"hypothesisId":"H2"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":6},"timestamp":1773773399129,"hypothesisId":"H4"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":6},"timestamp":1773773399930,"hypothesisId":"exit"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1773773425732,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after matches query","message":"matches query result","data":{"matchesLength":6,"matchesError":null,"hasData":true},"timestamp":1773773426266,"hypothesisId":"H1"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":2,"sessionsError":null,"hasData":true},"timestamp":1773773426579,"hypothesisId":"H2"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":6},"timestamp":1773773426579,"hypothesisId":"H4"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":6},"timestamp":1773773428544,"hypothesisId":"exit"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1773773548078,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after matches query","message":"matches query result","data":{"matchesLength":6,"matchesError":null,"hasData":true},"timestamp":1773773548507,"hypothesisId":"H1"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":2,"sessionsError":null,"hasData":true},"timestamp":1773773548703,"hypothesisId":"H2"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":6},"timestamp":1773773548704,"hypothesisId":"H4"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":6},"timestamp":1773773549512,"hypothesisId":"exit"}

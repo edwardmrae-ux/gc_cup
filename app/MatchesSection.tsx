@@ -41,68 +41,82 @@ function MatchCard({ m }: { m: LiveMatch }) {
   const textSecondary = winner ? "text-white/90" : "text-slate-600";
   const textMuted = winner ? "text-white/80" : "text-slate-500";
   const textBold = winner ? "text-white" : "text-slate-900";
-  const divideClass = winner ? "divide-white/30" : "divide-slate-200";
+
+  const matchTypeLabel =
+    m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play";
+  const nineLabel =
+    m.nine === "front"
+      ? "Front 9"
+      : m.nine === "back"
+        ? "Back 9"
+        : "9 holes";
+
+  const metaParts = [matchTypeLabel, nineLabel, holesLabel].filter(Boolean);
+  const metaLabel = metaParts.join(" · ");
 
   return (
     <Link href={`/match/${m.id}`} className={cardClasses}>
-      <div className="mb-3 text-center">
-        <p className={`font-medium ${textPrimary} text-lg`}>
-          {m.sessionName} – Match {m.matchNum ?? "—"}
-        </p>
-        <p className={`text-sm ${textSecondary}`}>
-          {m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"}
-          {m.nine === "front" ? " – Front 9" : m.nine === "back" ? " – Back 9" : " – 9 holes"}
-        </p>
-        {holesLabel && (
-          <p className={`text-xs ${textMuted} mt-1`}>{holesLabel}</p>
+      <div className="flex flex-col gap-1">
+        {/* Row 1: Team names + centered session/match */}
+        <div className="grid grid-cols-3 items-baseline gap-3 text-sm">
+          <div className={`justify-self-start font-semibold ${textBold}`}>
+            Team Chubbs
+          </div>
+          <div className="justify-self-center text-center">
+            <span className={`font-medium ${textPrimary}`}>
+              {m.sessionName} – Match {m.matchNum ?? "—"}
+            </span>
+          </div>
+          <div
+            className={`justify-self-end text-right font-semibold ${textBold}`}
+          >
+            Team McAvoy
+          </div>
+        </div>
+
+        {/* Row 2: Centered meta line */}
+        {metaLabel && (
+          <div className="text-xs text-center">
+            <span className={textSecondary}>{metaLabel}</span>
+          </div>
         )}
-      </div>
-      <div className={`flex divide-x ${divideClass}`}>
-        <div className="flex-1 px-3">
-          <div className="mb-2">
-            <p className={`font-bold ${textBold}`}>Team Chubbs</p>
-            {m.playerNames && (
-              <ul className={`text-xs ${textSecondary} mt-1`}>
-                {m.playerNames.team_a.map((name: string, idx: number) => (
-                  <li key={idx}>{name}</li>
-                ))}
-              </ul>
-            )}
+
+        {/* Row 3: Players under each team label */}
+        {m.playerNames && (
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div className={textSecondary}>
+              {m.playerNames.team_a.map((name: string, idx: number) => (
+                <div key={idx}>{name}</div>
+              ))}
+            </div>
+            <div />
+            <div className={`${textSecondary} text-right`}>
+              {m.playerNames.team_b.map((name: string, idx: number) => (
+                <div key={idx}>{name}</div>
+              ))}
+            </div>
           </div>
-          {m.matchType === "stableford_2v2" && (
-            <div>
-              <p className={`text-2xl font-bold ${textPrimary}`}>
-                {m.teamAPoints ?? 0}
-              </p>
+        )}
+
+        {/* Row 4: Scores under players (Stableford) / match state (1v1) */}
+        {m.matchType === "stableford_2v2" && (
+          <div className="mt-1 grid grid-cols-3 gap-3">
+            <div className={`text-2xl font-bold ${textPrimary}`}>
+              {m.teamAPoints ?? 0}
             </div>
-          )}
-          {m.matchType === "match_play_1v1" && m.matchPlayState && (
-            <div>
-              <p className={`text-lg font-semibold ${textPrimary}`}>
-                {m.matchPlayState}
-              </p>
+            <div />
+            <div className={`text-2xl font-bold ${textPrimary} text-right`}>
+              {m.teamBPoints ?? 0}
             </div>
-          )}
-        </div>
-        <div className="flex-1 px-3">
-          <div className="mb-2 text-right">
-            <p className={`font-bold ${textBold}`}>Team McAvoy</p>
-            {m.playerNames && (
-              <ul className={`text-xs ${textSecondary} mt-1`}>
-                {m.playerNames.team_b.map((name: string, idx: number) => (
-                  <li key={idx}>{name}</li>
-                ))}
-              </ul>
-            )}
           </div>
-          {m.matchType === "stableford_2v2" && (
-            <div className="text-right">
-              <p className={`text-2xl font-bold ${textPrimary}`}>
-                {m.teamBPoints ?? 0}
-              </p>
-            </div>
-          )}
-        </div>
+        )}
+        {m.matchType === "match_play_1v1" && m.matchPlayState && (
+          <div className="mt-1 flex justify-end">
+            <p className={`text-lg font-semibold ${textPrimary}`}>
+              {m.matchPlayState}
+            </p>
+          </div>
+        )}
       </div>
     </Link>
   );
