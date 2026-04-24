@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { getActiveSessionLabel } from "@/lib/activeSessionLabel";
 import { getAllMatches, partitionMatchesBySessionAndStatus } from "@/lib/leaderboard";
-import { getActiveSessionId } from "@/lib/activeSessionStore";
 
 export async function GET() {
   try {
-    const [allMatches, activeSessionId] = await Promise.all([
+    const [allMatches, { activeSessionId, activeSessionName }] = await Promise.all([
       getAllMatches(),
-      getActiveSessionId(),
+      getActiveSessionLabel(),
     ]);
 
     const { liveMatches, completedMatches, upcomingMatches } =
@@ -17,6 +17,7 @@ export async function GET() {
       completedMatches,
       upcomingMatches,
       allMatches,
+      activeSessionName,
     });
   } catch (error) {
     console.error("Failed to fetch matches:", error);

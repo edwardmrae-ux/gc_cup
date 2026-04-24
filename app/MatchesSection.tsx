@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 
 function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
@@ -144,6 +144,7 @@ interface MatchesSectionProps {
   completedMatches: LiveMatch[];
   upcomingMatches: LiveMatch[];
   allMatches: LiveMatch[];
+  activeSessionName: string | null;
 }
 
 type MatchState = {
@@ -151,6 +152,7 @@ type MatchState = {
   completedMatches: LiveMatch[];
   upcomingMatches: LiveMatch[];
   allMatches: LiveMatch[];
+  activeSessionName: string | null;
 };
 
 function getInitialTab(
@@ -168,6 +170,7 @@ export function MatchesSection({
   completedMatches,
   upcomingMatches,
   allMatches,
+  activeSessionName,
 }: MatchesSectionProps) {
   const [activeTab, setActiveTab] = useState<MatchTab>(() =>
     getInitialTab(liveMatches, completedMatches, upcomingMatches)
@@ -177,8 +180,19 @@ export function MatchesSection({
     completedMatches,
     upcomingMatches,
     allMatches,
+    activeSessionName,
   });
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    setMatchState({
+      liveMatches,
+      completedMatches,
+      upcomingMatches,
+      allMatches,
+      activeSessionName,
+    });
+  }, [liveMatches, completedMatches, upcomingMatches, allMatches, activeSessionName]);
 
   const matches =
     activeTab === "live"
@@ -204,6 +218,7 @@ export function MatchesSection({
         completedMatches: data.completedMatches,
         upcomingMatches: data.upcomingMatches,
         allMatches: data.allMatches,
+        activeSessionName: data.activeSessionName ?? null,
       });
     } catch (error) {
       console.error("Error refreshing matches", error);
@@ -284,6 +299,16 @@ export function MatchesSection({
           {refreshing ? "Refreshing…" : "Refresh"}
         </button>
       </div>
+      <p className="text-sm text-slate-600 mb-3">
+        {matchState.activeSessionName ? (
+          <>
+            <span className="text-slate-500">Active session </span>
+            <span className="font-medium text-slate-800">{matchState.activeSessionName}</span>
+          </>
+        ) : (
+          <span className="text-slate-500">No active session selected</span>
+        )}
+      </p>
       {matches.length === 0 ? (
         <p className="text-sm text-slate-500 py-4">No matches in this category yet.</p>
       ) : (

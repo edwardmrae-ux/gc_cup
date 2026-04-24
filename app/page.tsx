@@ -1,12 +1,12 @@
 import { getTeamTotals, getAllMatches, partitionMatchesBySessionAndStatus } from "@/lib/leaderboard";
+import { getActiveSessionLabel } from "@/lib/activeSessionLabel";
 import { MatchesSection } from "./MatchesSection";
-import { getActiveSessionId } from "@/lib/activeSessionStore";
 
 export default async function LeaderboardPage() {
-  const [totals, allMatches, activeSessionId] = await Promise.all([
+  const [totals, allMatches, { activeSessionId, activeSessionName }] = await Promise.all([
     getTeamTotals(),
     getAllMatches(),
-    getActiveSessionId(),
+    getActiveSessionLabel(),
   ]);
 
   const { liveMatches, completedMatches, upcomingMatches } = partitionMatchesBySessionAndStatus(
@@ -39,6 +39,7 @@ export default async function LeaderboardPage() {
           completedMatches={completedMatches}
           upcomingMatches={upcomingMatches}
           allMatches={allMatches}
+          activeSessionName={activeSessionName}
         />
       )}
 
