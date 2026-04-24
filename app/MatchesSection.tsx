@@ -39,9 +39,14 @@ function getCurrentLeader(m: LiveMatch): "chubbs" | "mcavoy" | null {
   return null;
 }
 
+function getCardTeam(m: LiveMatch): "chubbs" | "mcavoy" | null {
+  if (m.status === "complete") return getWinner(m);
+  if (m.status === "in_progress") return getCurrentLeader(m);
+  return null;
+}
+
 function MatchCard({ m }: { m: LiveMatch }) {
-  const winner = getWinner(m);
-  const leader = getCurrentLeader(m);
+  const cardTeam = getCardTeam(m);
   const holesLabel =
     m.holesCompleted != null && m.holesCompleted >= m.holes
       ? "Match Complete"
@@ -49,18 +54,14 @@ function MatchCard({ m }: { m: LiveMatch }) {
         ? `Thru ${m.holesCompleted}`
         : null;
 
-  const hasColor = !!winner || (m.status === "in_progress" && !!leader);
+  const hasColor = !!cardTeam;
 
   const cardClasses =
-    winner === "chubbs"
+    cardTeam === "chubbs"
       ? "block border border-white/30 rounded-lg p-4 bg-[#1F5E3B] hover:opacity-95 shadow-sm text-white"
-      : winner === "mcavoy"
+      : cardTeam === "mcavoy"
         ? "block border border-white/30 rounded-lg p-4 bg-[#C65D1E] hover:opacity-95 shadow-sm text-white"
-        : m.status === "in_progress" && leader === "chubbs"
-          ? "block border border-white/30 rounded-lg p-4 bg-[rgba(31,94,59,0.66)] hover:opacity-95 shadow-sm text-white"
-          : m.status === "in_progress" && leader === "mcavoy"
-            ? "block border border-white/30 rounded-lg p-4 bg-[rgba(198,93,30,0.66)] hover:opacity-95 shadow-sm text-white"
-            : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
+        : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
 
   const textPrimary = hasColor ? "text-white" : "text-slate-800";
   const textSecondary = hasColor ? "text-white/90" : "text-slate-600";
