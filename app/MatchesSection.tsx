@@ -68,8 +68,6 @@ function MatchCard({ m }: { m: LiveMatch }) {
   const textMuted = hasColor ? "text-white/80" : "text-slate-500";
   const textBold = hasColor ? "text-white" : "text-slate-900";
 
-  const matchTypeLabel =
-    m.matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play";
   const nineLabel =
     m.nine === "front"
       ? "Front 9"
@@ -87,7 +85,7 @@ function MatchCard({ m }: { m: LiveMatch }) {
     <Link href={`/match/${m.id}`} className={cardClasses}>
       <div className="flex flex-col gap-0.5">
         <div className={`w-full text-center text-2xl font-medium ${textPrimary}`}>
-          Match {m.matchNum ?? "—"} — {matchTypeLabel} — {nineLabel}
+          Match {m.matchNum ?? "—"} — {nineLabel}
         </div>
 
         <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
