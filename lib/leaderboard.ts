@@ -267,9 +267,12 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
       .select("player_id, side")
       .eq("match_id", m.id);
     const { data: players } = matchPlayers?.length
-      ? await supabase.from("players").select("id, name").in("id", matchPlayers.map((mp) => mp.player_id))
+      ? await supabase
+          .from("players")
+          .select("id, last_name")
+          .in("id", matchPlayers.map((mp) => mp.player_id))
       : { data: [] };
-    const playersById = new Map((players ?? []).map((p) => [p.id, p.name]));
+    const playersById = new Map((players ?? []).map((p) => [p.id, p.last_name]));
     const teamAIds = (matchPlayers ?? [])
       .filter((p) => p.side === "team_a")
       .map((p) => p.player_id);
@@ -451,9 +454,12 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
       .filter((p) => p.side === "team_b")
       .map((p) => p.player_id);
     const { data: players } = matchPlayers?.length
-      ? await supabase.from("players").select("id, name").in("id", matchPlayers.map((mp) => mp.player_id))
+      ? await supabase
+          .from("players")
+          .select("id, last_name")
+          .in("id", matchPlayers.map((mp) => mp.player_id))
       : { data: [] };
-    const playersById = new Map((players ?? []).map((p) => [p.id, p.name]));
+    const playersById = new Map((players ?? []).map((p) => [p.id, p.last_name]));
 
     const { data: scores } = await supabase
       .from("hole_scores")

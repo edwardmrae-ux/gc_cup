@@ -1,6 +1,7 @@
 import { getTeamTotals, getAllMatches, partitionMatchesBySessionAndStatus } from "@/lib/leaderboard";
 import { getActiveSessionLabel } from "@/lib/activeSessionLabel";
 import { MatchesSection } from "./MatchesSection";
+import { TeamPointsScorecard } from "./TeamPointsScorecard";
 
 export default async function LeaderboardPage() {
   const [totals, allMatches, { activeSessionId, activeSessionName }] = await Promise.all([
@@ -16,19 +17,34 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-800">Leaderboard</h1>
+      
 
       <section className="border border-slate-200 rounded-lg bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-700 mb-4">Team score</h2>
-        <div className="flex justify-between items-center gap-8">
+        <div className="flex justify-between items-end gap-8">
           <div className="text-center flex-1">
             <p className="text-2xl font-bold text-slate-900">Team Chubbs</p>
-            <p className="text-4xl font-bold text-slate-800 mt-1">{totals.teamChubbs}</p>
+            <p className="text-1xl font-light text-slate-600">16 points to retain</p>
           </div>
-          <div className="text-slate-400 font-medium">vs</div>
+          <div className="pb-1 text-slate-400 font-medium">vs</div>
           <div className="text-center flex-1">
             <p className="text-2xl font-bold text-slate-900">Team McAvoy</p>
-            <p className="text-4xl font-bold text-slate-800 mt-1">{totals.teamMcAvoy}</p>
+            <p className="text-1xl font-light text-slate-600">16.5 points to win</p>
+          </div>
+        </div>
+
+        <div className="my-5">
+          <TeamPointsScorecard teamChubbs={totals.teamChubbs} teamMcAvoy={totals.teamMcAvoy} />
+        </div>
+
+        <div className="flex justify-between items-center gap-8">
+          <div className="text-center flex-1">
+            <p className="text-4xl font-bold text-slate-800">{totals.teamChubbs}</p>
+          </div>
+          <div className="text-slate-400 font-medium" aria-hidden>
+            vs
+          </div>
+          <div className="text-center flex-1">
+            <p className="text-4xl font-bold text-slate-800">{totals.teamMcAvoy}</p>
           </div>
         </div>
       </section>
