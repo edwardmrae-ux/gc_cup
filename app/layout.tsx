@@ -19,7 +19,13 @@ export default function RootLayout({
             <a href="/" className="font-semibold text-lg text-slate-800">
               GC Cup
             </a>
-            <nav>
+            <nav className="flex items-center gap-4">
+              <a
+                href="/individual-scoring"
+                className="text-slate-600 hover:text-slate-900 text-sm"
+              >
+                Individual Scoring
+              </a>
               <a
                 href="/admin"
                 className="text-slate-600 hover:text-slate-900 text-sm"

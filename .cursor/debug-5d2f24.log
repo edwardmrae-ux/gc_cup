@@ -1,0 +1,13 @@
+{"sessionId":"5d2f24","hypothesisId":"H1","location":"middleware.ts:document","message":"document-like path","data":{"pathname":"/"},"timestamp":1777663121303}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663121323}
+{"sessionId":"5d2f24","hypothesisId":"H2","location":"middleware.ts:css","message":"css asset path","data":{"pathname":"/_next/static/css/app/layout.css"},"timestamp":1777663126550}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663126559}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663126574}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663126575}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663126577}
+{"sessionId":"5d2f24","hypothesisId":"H1","location":"middleware.ts:document","message":"document-like path","data":{"pathname":"/"},"timestamp":1777663381929}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663383078}
+{"sessionId":"5d2f24","hypothesisId":"H2","location":"middleware.ts:css","message":"css asset path","data":{"pathname":"/_next/static/css/app/layout.css"},"timestamp":1777663387826}
+{"sessionId":"5d2f24","hypothesisId":"H1","location":"middleware.ts:document","message":"document-like path","data":{"pathname":"/individual-scoring"},"timestamp":1777663390550}
+{"sessionId":"5d2f24","hypothesisId":"H3","location":"app/layout.tsx:RootLayout","message":"RootLayout render","data":{"globalsCssImported":true},"timestamp":1777663390726}
+{"sessionId":"5d2f24","hypothesisId":"H2","location":"middleware.ts:css","message":"css asset path","data":{"pathname":"/_next/static/css/app/layout.css"},"timestamp":1777663391003}

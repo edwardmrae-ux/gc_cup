@@ -138,3 +138,16 @@
 {"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":2,"sessionsError":null,"hasData":true},"timestamp":1774041187420,"hypothesisId":"H2"}
 {"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":6},"timestamp":1774041187421,"hypothesisId":"H4"}
 {"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":6},"timestamp":1774041188755,"hypothesisId":"exit"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1777662944154,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1777662944163,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1777662944245,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1777663121322,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after matches query","message":"matches query result","data":{"matchesLength":32,"matchesError":null,"hasData":true},"timestamp":1777663121503,"hypothesisId":"H1"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":3,"sessionsError":null,"hasData":true},"timestamp":1777663121682,"hypothesisId":"H2"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":32},"timestamp":1777663121683,"hypothesisId":"H4"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":32},"timestamp":1777663126443,"hypothesisId":"exit"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches","message":"getAllMatches entry","data":{},"timestamp":1777663383074,"hypothesisId":"entry"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after matches query","message":"matches query result","data":{"matchesLength":32,"matchesError":null,"hasData":true},"timestamp":1777663383424,"hypothesisId":"H1"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:after sessions query","message":"sessions query result","data":{"sessionsLength":3,"sessionsError":null,"hasData":true},"timestamp":1777663383634,"hypothesisId":"H2"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches after sort","message":"sortedMatches length","data":{"sortedMatchesLength":32},"timestamp":1777663383634,"hypothesisId":"H4"}
+{"sessionId":"fe25fe","location":"leaderboard.ts:getAllMatches return","message":"result length","data":{"resultLength":32},"timestamp":1777663387588,"hypothesisId":"exit"}

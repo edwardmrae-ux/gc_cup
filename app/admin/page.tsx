@@ -3,10 +3,9 @@ import { AddPlayerForm } from "./AddPlayerForm";
 import { CreateSessionForm } from "./CreateSessionForm";
 import { CreateFoursomeForm } from "./CreateFoursomeForm";
 import { CreateMatchForm } from "./CreateMatchForm";
-import { MatchStatusSelect } from "./MatchStatusSelect";
 import { ActiveSessionSelect } from "./ActiveSessionSelect";
+import { AdminMatchesList } from "./AdminMatchesList";
 import { getActiveSessionId } from "@/lib/activeSessionStore";
-import Link from "next/link";
 
 function formatMatchType(matchType: string) {
   return matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play";
@@ -104,6 +103,31 @@ export default async function AdminPage() {
     return a.id.localeCompare(b.id);
   });
 
+  const sessionsForFilter = (sessions ?? []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    session_date: s.session_date,
+  }));
+
+  const adminMatchRows = sortedMatches.map((m) => {
+    const foursome = foursomesById.get(m.foursome_id);
+    const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
+    const mpRows = matchPlayersByMatchId.get(m.id) ?? [];
+    const playersStr = commaSeparatedPlayerNames(mpRows, playersById);
+    return {
+      id: m.id,
+      sessionId: foursome?.session_id ?? null,
+      sessionName: session?.name ?? "—",
+      foursomeLabel: foursome?.label ?? foursome?.id.slice(0, 8) ?? "—",
+      matchNum: m.match_num ?? null,
+      matchTypeLabel: formatMatchType(m.match_type),
+      nineLabel: formatNine(m.nine),
+      holes: m.holes,
+      status: m.status,
+      playersStr,
+    };
+  });
+
   return (
     <div className="space-y-10">
       <h1 className="text-2xl font-bold text-slate-800">Admin</h1>
@@ -161,49 +185,7 @@ export default async function AdminPage() {
           teams={teams ?? []}
           sessions={sessions ?? []}
         />
-        <ul className="mt-3 space-y-3 text-sm">
-          {sortedMatches.map((m) => {
-            const foursome = foursomesById.get(m.foursome_id);
-            const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
-            const mpRows = matchPlayersByMatchId.get(m.id) ?? [];
-            const playersStr = commaSeparatedPlayerNames(mpRows, playersById);
-            return (
-              <li key={m.id} className="space-y-1.5 border-b border-slate-100 pb-3 last:border-0">
-                <div className="text-slate-700 flex flex-wrap gap-x-2 gap-y-1 items-baseline">
-                  <span>
-                    <span className="text-slate-500">Session:</span> {session?.name ?? "—"}
-                  </span>
-                  <span className="text-slate-300">·</span>
-                  <span>
-                    <span className="text-slate-500">Foursome:</span>{" "}
-                    {foursome?.label ?? foursome?.id.slice(0, 8) ?? "—"}
-                  </span>
-                  <span className="text-slate-300">·</span>
-                  <span>
-                    <span className="text-slate-500">Match #:</span> {m.match_num ?? "—"}
-                  </span>
-                  <span className="text-slate-300">·</span>
-                  <span>
-                    <span className="text-slate-500">Type:</span> {formatMatchType(m.match_type)}
-                  </span>
-                  <span className="text-slate-300">·</span>
-                  <span>
-                    <span className="text-slate-500">Nine:</span> {formatNine(m.nine)}
-                  </span>
-                </div>
-                <div className="text-slate-700">
-                  <span className="text-slate-500">Players:</span> {playersStr || "—"}
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link href={`/match/${m.id}`} className="text-blue-600 hover:underline">
-                    Open scoring ({m.holes} holes)
-                  </Link>
-                  <MatchStatusSelect matchId={m.id} currentStatus={m.status} />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <AdminMatchesList sessions={sessionsForFilter} rows={adminMatchRows} />
       </section>
     </div>
   );

@@ -13,25 +13,6 @@ export default async function MatchPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // #region agent log
-  fetch("http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "bec0f7",
-    },
-    body: JSON.stringify({
-      sessionId: "bec0f7",
-      runId: "pre-fix",
-      hypothesisId: "H2",
-      location: "app/match/[id]/page.tsx:MatchPage",
-      message: "MatchPage invoked",
-      data: {},
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-
   const { id: matchId } = await params;
   const supabase = await createClient();
 

@@ -352,19 +352,12 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
 }
 
 export async function getAllMatches(): Promise<LiveMatch[]> {
-  // #region agent log
-  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:getAllMatches',message:'getAllMatches entry',data:{},timestamp:Date.now(),hypothesisId:'entry'})}).catch(()=>{});
-  // #endregion
   const supabase = await createClient();
   const matchesResult = await supabase
     .from("matches")
     .select("id, foursome_id, match_type, holes, status, nine, match_num")
     .order("id");
   const matches = matchesResult.data;
-  const matchesError = matchesResult.error;
-  // #region agent log
-  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:after matches query',message:'matches query result',data:{matchesLength:matches?.length ?? 0,matchesError:matchesError?.message ?? null,hasData:!!matches},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-  // #endregion
   if (!matches?.length) return [];
 
   const { data: config } = await supabase
@@ -387,10 +380,6 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     .select("id, name, course_id, sort")
     .in("id", sessionIds);
   const sessions = sessionsResult.data;
-  const sessionsError = sessionsResult.error;
-  // #region agent log
-  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:after sessions query',message:'sessions query result',data:{sessionsLength:sessions?.length ?? 0,sessionsError:sessionsError?.message ?? null,hasData:!!sessions},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-  // #endregion
   const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
 
   const sortedMatches = [...matches].sort((a, b) => {
@@ -408,10 +397,6 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     if (matchNumA !== matchNumB) return matchNumA - matchNumB;
     return a.id.localeCompare(b.id);
   });
-
-  // #region agent log
-  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:getAllMatches after sort',message:'sortedMatches length',data:{sortedMatchesLength:sortedMatches.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-  // #endregion
 
   const courseIds = Array.from(
     new Set(
@@ -519,8 +504,5 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
       },
     });
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7828/ingest/cb0c7db1-dacd-4a55-8df4-c55ced40b85b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'fe25fe'},body:JSON.stringify({sessionId:'fe25fe',location:'leaderboard.ts:getAllMatches return',message:'result length',data:{resultLength:result.length},timestamp:Date.now(),hypothesisId:'exit'})}).catch(()=>{});
-  // #endregion
   return result;
 }

@@ -163,6 +163,34 @@ function getInitialTab(
   return "completed";
 }
 
+type SessionMatchGroup = {
+  key: string;
+  label: string;
+  matches: LiveMatch[];
+};
+
+function groupMatchesBySession(matches: LiveMatch[]): SessionMatchGroup[] {
+  const map = new Map<string, LiveMatch[]>();
+  const order: string[] = [];
+  for (const m of matches) {
+    const key = m.sessionId ?? `name:${m.sessionName}`;
+    if (!map.has(key)) {
+      order.push(key);
+      map.set(key, []);
+    }
+    map.get(key)!.push(m);
+  }
+  return order.map((key) => {
+    const groupMatches = map.get(key)!;
+    const raw = groupMatches[0]?.sessionName?.trim() ?? "";
+    return {
+      key,
+      label: raw || "Session",
+      matches: groupMatches,
+    };
+  });
+}
+
 export function MatchesSection({
   liveMatches,
   completedMatches,
@@ -200,6 +228,9 @@ export function MatchesSection({
         : activeTab === "all"
           ? matchState.allMatches
           : matchState.completedMatches;
+
+  const sessionGroups = matches.length === 0 ? [] : groupMatchesBySession(matches);
+  const showSessionHeadings = sessionGroups.length > 1;
 
   async function handleRefresh() {
     try {
@@ -310,13 +341,22 @@ export function MatchesSection({
       {matches.length === 0 ? (
         <p className="text-sm text-slate-500 py-4">No matches in this category yet.</p>
       ) : (
-        <ul className="space-y-3">
-          {matches.map((m) => (
-            <li key={m.id}>
-              <MatchCard m={m} />
-            </li>
+        <div className="space-y-6">
+          {sessionGroups.map((group) => (
+            <div key={group.key}>
+              {showSessionHeadings && (
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">{group.label}</h3>
+              )}
+              <ul className="space-y-3">
+                {group.matches.map((m) => (
+                  <li key={m.id}>
+                    <MatchCard m={m} />
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );
