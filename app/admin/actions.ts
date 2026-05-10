@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { type MatchType, isMatchPlay1v1 } from "@/lib/db-types";
 import { getActiveSessionId, setActiveSessionId } from "@/lib/activeSessionStore";
 
 const ADMIN_COOKIE_NAME = "gc_admin_pin";
@@ -107,8 +108,11 @@ export async function createMatch(_prev: { error?: string }, formData: FormData)
   if (match_type === "stableford_2v2" && (!team_a_1 || !team_a_2 || !team_b_1 || !team_b_2)) {
     return { error: "All four players required for 2v2" };
   }
-  if (match_type === "match_play_1v1" && (!team_a_1 || !team_b_1)) {
+  if (isMatchPlay1v1(match_type) && (!team_a_1 || !team_b_1)) {
     return { error: "Both players required for 1v1" };
+  }
+  if (isMatchPlay1v1(match_type) && team_a_1 && team_b_1 && team_a_1 === team_b_1) {
+    return { error: "Players must be different" };
   }
   const { data: match, error: matchErr } = await supabase
     .from("matches")
@@ -116,7 +120,7 @@ export async function createMatch(_prev: { error?: string }, formData: FormData)
       foursome_id,
       holes: holes === 18 ? 18 : 9,
       status,
-      match_type: match_type as "stableford_2v2" | "match_play_1v1",
+      match_type: match_type as MatchType,
       nine,
       match_num,
     })
@@ -124,9 +128,9 @@ export async function createMatch(_prev: { error?: string }, formData: FormData)
     .single();
   if (matchErr || !match) return { error: matchErr?.message ?? "Failed to create match" };
   const rows: { match_id: string; player_id: string; side: "team_a" | "team_b"; pair_index: number | null }[] = [];
-  if (team_a_1) rows.push({ match_id: match.id, player_id: team_a_1, side: "team_a", pair_index: match_type === "match_play_1v1" ? null : 0 });
+  if (team_a_1) rows.push({ match_id: match.id, player_id: team_a_1, side: "team_a", pair_index: isMatchPlay1v1(match_type) ? null : 0 });
   if (team_a_2) rows.push({ match_id: match.id, player_id: team_a_2, side: "team_a", pair_index: 1 });
-  if (team_b_1) rows.push({ match_id: match.id, player_id: team_b_1, side: "team_b", pair_index: match_type === "match_play_1v1" ? null : 0 });
+  if (team_b_1) rows.push({ match_id: match.id, player_id: team_b_1, side: "team_b", pair_index: isMatchPlay1v1(match_type) ? null : 0 });
   if (team_b_2) rows.push({ match_id: match.id, player_id: team_b_2, side: "team_b", pair_index: 1 });
   const { error: mpErr } = await supabase.from("match_players").insert(rows);
   if (mpErr) return { error: mpErr.message };

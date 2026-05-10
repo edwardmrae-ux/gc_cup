@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStablefordPoints, getParForHole } from "@/lib/stableford";
+import type { MatchType } from "@/lib/db-types";
 import { upsertHoleScore } from "./actions";
 
 function scoreKey(playerId: string, holeNum: number) {
@@ -25,7 +26,7 @@ export function ScoreEntryTable({
   players: { id: string; name: string }[];
   holeNumbers: number[];
   existingScores: { player_id: string; hole_number: number; gross_score: number }[];
-  matchType: "stableford_2v2" | "match_play_1v1";
+  matchType: MatchType;
   teamAIds: string[];
   teamBIds: string[];
   parByHole: Record<number, number> | null;

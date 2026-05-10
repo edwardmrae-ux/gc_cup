@@ -1,4 +1,5 @@
 import { createClient } from "./supabase/server";
+import { isSaturdayMatchPlay } from "./db-types";
 import {
   stablefordTotal,
   stableford2v2Points,
@@ -137,6 +138,7 @@ export async function getTeamTotals(): Promise<TeamTotals> {
   let teamMcAvoy = 0;
 
   for (const match of matches) {
+    if (match.match_type === "saturday_match_play_1v1") continue;
     const foursome = foursomesById.get(match.foursome_id);
     const session = foursome ? sessionsById.get(foursome.session_id) : undefined;
     const courseId: string | undefined = (session as any)?.course_id ?? undefined;
@@ -318,12 +320,15 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
           m.holes,
           holeNumbers
         );
-      matchPlayState =
-        team_a > team_b
-          ? "Chubbs leads"
-          : team_b > team_a
-            ? "McAvoy leads"
-            : "All square";
+        const nameA = playersById.get(teamAPlayerId) ?? "";
+        const nameB = playersById.get(teamBPlayerId) ?? "";
+        if (isSaturdayMatchPlay(m.match_type)) {
+          matchPlayState =
+            team_a > team_b ? `${nameA} leads` : team_b > team_a ? `${nameB} leads` : "All square";
+        } else {
+          matchPlayState =
+            team_a > team_b ? "Chubbs leads" : team_b > team_a ? "McAvoy leads" : "All square";
+        }
       }
     }
 
@@ -480,8 +485,15 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
         m.holes,
         holeNumbers
       );
-      matchPlayState =
-        team_a > team_b ? "Chubbs leads" : team_b > team_a ? "McAvoy leads" : "All square";
+      const nameA = playersById.get(teamAIds[0]) ?? "";
+      const nameB = playersById.get(teamBIds[0]) ?? "";
+      if (isSaturdayMatchPlay(m.match_type)) {
+        matchPlayState =
+          team_a > team_b ? `${nameA} leads` : team_b > team_a ? `${nameB} leads` : "All square";
+      } else {
+        matchPlayState =
+          team_a > team_b ? "Chubbs leads" : team_b > team_a ? "McAvoy leads" : "All square";
+      }
     }
 
     result.push({

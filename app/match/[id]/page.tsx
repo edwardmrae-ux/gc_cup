@@ -5,6 +5,7 @@ import {
   stablefordTotal,
   matchPlay1v1HolesWon,
 } from "@/lib/team-points";
+import { isMatchPlay1v1, isSaturdayMatchPlay } from "@/lib/db-types";
 import { ScoreEntryTable } from "./ScoreEntryTable";
 import { MatchStatusActions } from "./MatchStatusActions";
 
@@ -91,7 +92,7 @@ export default async function MatchPage({
   if (match.match_type === "stableford_2v2") {
     teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parByHole, holeNumbers);
     teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parByHole, holeNumbers);
-  } else if (match.match_type === "match_play_1v1" && teamAIds[0] && teamBIds[0]) {
+  } else if (isMatchPlay1v1(match.match_type) && teamAIds[0] && teamBIds[0]) {
     const { holesA, holesB } = matchPlay1v1HolesWon(
       scoreRows,
       teamAIds[0],
@@ -100,14 +101,25 @@ export default async function MatchPage({
       holeNumbers
     );
     const margin = Math.abs(holesA - holesB);
+    const nameA = playersById.get(teamAIds[0]) ?? "Player 1";
+    const nameB = playersById.get(teamBIds[0]) ?? "Player 2";
+    const saturday = isSaturdayMatchPlay(match.match_type);
     if (match.status === "complete") {
-      if (holesA > holesB) matchPlayHeader = `Team Chubbs wins by ${margin}.`;
-      else if (holesB > holesA) matchPlayHeader = `Team McAvoy wins by ${margin}.`;
-      else matchPlayHeader = "Tied.";
+      if (holesA > holesB) {
+        matchPlayHeader = saturday ? `${nameA} wins by ${margin}.` : `Team Chubbs wins by ${margin}.`;
+      } else if (holesB > holesA) {
+        matchPlayHeader = saturday ? `${nameB} wins by ${margin}.` : `Team McAvoy wins by ${margin}.`;
+      } else {
+        matchPlayHeader = "Tied.";
+      }
     } else {
-      if (holesA > holesB) matchPlayHeader = `Team Chubbs leads by ${margin}.`;
-      else if (holesB > holesA) matchPlayHeader = `Team McAvoy leads by ${margin}.`;
-      else matchPlayHeader = "All Square.";
+      if (holesA > holesB) {
+        matchPlayHeader = saturday ? `${nameA} leads by ${margin}.` : `Team Chubbs leads by ${margin}.`;
+      } else if (holesB > holesA) {
+        matchPlayHeader = saturday ? `${nameB} leads by ${margin}.` : `Team McAvoy leads by ${margin}.`;
+      } else {
+        matchPlayHeader = "All Square.";
+      }
     }
   }
 
@@ -125,7 +137,12 @@ export default async function MatchPage({
       </div>
 
       <h1 className="text-2xl font-bold text-slate-800">
-        {match.match_type === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play"} – {match.holes} holes
+        {match.match_type === "stableford_2v2"
+          ? "2v2 Stableford"
+          : match.match_type === "saturday_match_play_1v1"
+            ? "Saturday 1v1 Match Play"
+            : "1v1 Match play"}{" "}
+        – {match.holes} holes
       </h1>
       <p className="text-slate-600 capitalize">{match.status.replace("_", " ")}</p>
 
@@ -134,7 +151,7 @@ export default async function MatchPage({
           {match.match_type === "stableford_2v2" && (
             <p>Team Chubbs {teamAPoints ?? 0} – Team McAvoy {teamBPoints ?? 0}</p>
           )}
-          {match.match_type === "match_play_1v1" && matchPlayHeader && (
+          {isMatchPlay1v1(match.match_type) && matchPlayHeader && (
             <p>{matchPlayHeader}</p>
           )}
         </div>

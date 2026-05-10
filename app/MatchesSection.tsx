@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
+import { isMatchPlay1v1, isSaturdayMatchPlay } from "@/lib/db-types";
 
 function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
   if (m.status !== "complete") return null;
@@ -88,47 +89,72 @@ function MatchCard({ m }: { m: LiveMatch }) {
           Match {m.matchNum ?? "—"} — {nineLabel}
         </div>
 
-        <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
-          <div className={`justify-self-start font-medium ${textBold}`}>
-            Team Chubbs
-          </div>
-          <div className={`justify-self-center text-center text-lg ${textMuted}`}>
-            {holesLabel ?? ""}
-          </div>
-          <div className={`justify-self-end text-right font-medium ${textBold}`}>
-            Team McAvoy
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 text-base">
-          <div className={textSecondary}>{teamAPlayerOne}</div>
-          <div />
-          <div className={`${textSecondary} text-right`}>{teamBPlayerOne}</div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 text-base">
-          <div className={textSecondary}>{teamAPlayerTwo}</div>
-          <div />
-          <div className={`${textSecondary} text-right`}>{teamBPlayerTwo}</div>
-        </div>
-
-        {m.matchType === "stableford_2v2" && (
-          <div className="mt-1 grid grid-cols-3 gap-3">
-            <div className={`text-5xl font-normal ${textPrimary}`}>
-              {m.teamAPoints ?? 0}
+        {isSaturdayMatchPlay(m.matchType) ? (
+          <>
+            <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
+              <div className={`justify-self-start font-medium ${textBold}`}>
+                {teamAPlayerOne || "—"}
+              </div>
+              <div className={`justify-self-center text-center text-lg ${textMuted}`}>
+                {holesLabel ?? ""}
+              </div>
+              <div className={`justify-self-end text-right font-medium ${textBold}`}>
+                {teamBPlayerOne || "—"}
+              </div>
             </div>
-            <div />
-            <div className={`text-5xl font-normal ${textPrimary} text-right`}>
-              {m.teamBPoints ?? 0}
+            {m.matchPlayState && (
+              <div className="mt-1 flex justify-center">
+                <p className={`text-lg font-semibold ${textPrimary}`}>
+                  {m.matchPlayState}
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
+              <div className={`justify-self-start font-medium ${textBold}`}>
+                Team Chubbs
+              </div>
+              <div className={`justify-self-center text-center text-lg ${textMuted}`}>
+                {holesLabel ?? ""}
+              </div>
+              <div className={`justify-self-end text-right font-medium ${textBold}`}>
+                Team McAvoy
+              </div>
             </div>
-          </div>
-        )}
-        {m.matchType === "match_play_1v1" && m.matchPlayState && (
-          <div className="mt-1 flex justify-end">
-            <p className={`text-lg font-semibold ${textPrimary}`}>
-              {m.matchPlayState}
-            </p>
-          </div>
+
+            <div className="grid grid-cols-3 gap-3 text-base">
+              <div className={textSecondary}>{teamAPlayerOne}</div>
+              <div />
+              <div className={`${textSecondary} text-right`}>{teamBPlayerOne}</div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-base">
+              <div className={textSecondary}>{teamAPlayerTwo}</div>
+              <div />
+              <div className={`${textSecondary} text-right`}>{teamBPlayerTwo}</div>
+            </div>
+
+            {m.matchType === "stableford_2v2" && (
+              <div className="mt-1 grid grid-cols-3 gap-3">
+                <div className={`text-5xl font-normal ${textPrimary}`}>
+                  {m.teamAPoints ?? 0}
+                </div>
+                <div />
+                <div className={`text-5xl font-normal ${textPrimary} text-right`}>
+                  {m.teamBPoints ?? 0}
+                </div>
+              </div>
+            )}
+            {m.matchType === "match_play_1v1" && m.matchPlayState && (
+              <div className="mt-1 flex justify-end">
+                <p className={`text-lg font-semibold ${textPrimary}`}>
+                  {m.matchPlayState}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Link>

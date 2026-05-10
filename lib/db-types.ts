@@ -1,5 +1,13 @@
 export type MatchStatus = "not_started" | "in_progress" | "complete";
-export type MatchType = "stableford_2v2" | "match_play_1v1";
+export type MatchType = "stableford_2v2" | "match_play_1v1" | "saturday_match_play_1v1";
+
+export function isMatchPlay1v1(matchType: string): boolean {
+  return matchType === "match_play_1v1" || matchType === "saturday_match_play_1v1";
+}
+
+export function isSaturdayMatchPlay(matchType: string): boolean {
+  return matchType === "saturday_match_play_1v1";
+}
 
 export interface Team {
   id: string;

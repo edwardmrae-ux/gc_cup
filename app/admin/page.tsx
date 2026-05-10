@@ -8,7 +8,9 @@ import { AdminMatchesList } from "./AdminMatchesList";
 import { getActiveSessionId } from "@/lib/activeSessionStore";
 
 function formatMatchType(matchType: string) {
-  return matchType === "stableford_2v2" ? "2v2 Stableford" : "1v1 Match play";
+  if (matchType === "stableford_2v2") return "2v2 Stableford";
+  if (matchType === "saturday_match_play_1v1") return "Saturday 1v1 Match Play";
+  return "1v1 Match play";
 }
 
 function formatNine(nine: string | null | undefined) {
