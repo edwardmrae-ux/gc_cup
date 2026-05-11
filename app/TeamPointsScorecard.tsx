@@ -1,6 +1,6 @@
 /** Match card team colors — see MatchesSection.tsx */
-const CHUBBS_GREEN = "#1F5E3B";
-const MCAVOY_ORANGE = "#C65D1E";
+const CHUBBS_GREEN = "#427340";
+const MCAVOY_COLOR = "#3C4E73";
 
 export interface TeamPointsScorecardProps {
   teamChubbs: number;
@@ -26,13 +26,13 @@ function cellFills(
   chubbs: number,
   mcavoy: number,
   maxPoints: number
-): { greenFraction: number; orangeFraction: number } {
+): { greenFraction: number; mcavoyFraction: number } {
   const greenFraction = Math.max(0, Math.min(chubbs, index + 1) - index);
-  const orangeFraction = Math.max(
+  const mcavoyFraction = Math.max(
     0,
     Math.min(index + 1, maxPoints) - Math.max(index, maxPoints - mcavoy)
   );
-  return { greenFraction, orangeFraction };
+  return { greenFraction, mcavoyFraction };
 }
 
 export function TeamPointsScorecard({
@@ -52,7 +52,7 @@ export function TeamPointsScorecard({
     >
       <div className="flex h-10 w-full overflow-hidden rounded-full ring-1 ring-slate-300/60">
         {Array.from({ length: maxPoints }, (_, i) => {
-          const { greenFraction, orangeFraction } = cellFills(i, chubbs, mcavoy, maxPoints);
+          const { greenFraction, mcavoyFraction } = cellFills(i, chubbs, mcavoy, maxPoints);
           return (
             <div
               key={i}
@@ -67,12 +67,12 @@ export function TeamPointsScorecard({
                   }}
                 />
               )}
-              {orangeFraction > 0 && (
+              {mcavoyFraction > 0 && (
                 <div
                   className="absolute inset-y-0 right-0 z-[1]"
                   style={{
-                    width: `${orangeFraction * 100}%`,
-                    backgroundColor: MCAVOY_ORANGE,
+                    width: `${mcavoyFraction * 100}%`,
+                    backgroundColor: MCAVOY_COLOR,
                   }}
                 />
               )}

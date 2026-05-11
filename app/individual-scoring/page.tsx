@@ -1,8 +1,8 @@
 import { getIndividualScoring } from "@/lib/individual-scoring";
 
 const TEAM_BAR: Record<"chubbs" | "mcavoy", string> = {
-  chubbs: "bg-[#1F5E3B]",
-  mcavoy: "bg-[#C65D1E]",
+  chubbs: "bg-[#427340]",
+  mcavoy: "bg-[#3C4E73]",
 };
 
 export default async function IndividualScoringPage() {

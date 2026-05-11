@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTeamTotals, getAllMatches, partitionMatchesBySessionAndStatus } from "@/lib/leaderboard";
 import { getActiveSessionLabel } from "@/lib/activeSessionLabel";
 import { MatchesSection } from "./MatchesSection";
@@ -17,7 +18,16 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="space-y-8">
-      
+      <div className="flex justify-center">
+        <Image
+          src="/images/gc-cup-shield-2026.png"
+          alt="The Good Counsel Cup 2026 tournament crest featuring a cat drinking beer, a tornado playing golf, a dragon with beer bottles, and a knight."
+          width={682}
+          height={1024}
+          className="h-auto w-auto max-h-48 md:max-h-56 object-contain"
+          priority
+        />
+      </div>
 
       <section className="border border-slate-200 rounded-lg bg-white p-6 shadow-sm">
         <div className="flex justify-between items-end gap-8">

@@ -59,9 +59,9 @@ function MatchCard({ m }: { m: LiveMatch }) {
 
   const cardClasses =
     cardTeam === "chubbs"
-      ? "block border border-white/30 rounded-lg p-4 bg-[#1F5E3B] hover:opacity-95 shadow-sm text-white"
+      ? "block border border-white/30 rounded-lg p-4 bg-[#427340] hover:opacity-95 shadow-sm text-white"
       : cardTeam === "mcavoy"
-        ? "block border border-white/30 rounded-lg p-4 bg-[#C65D1E] hover:opacity-95 shadow-sm text-white"
+        ? "block border border-white/30 rounded-lg p-4 bg-[#3C4E73] hover:opacity-95 shadow-sm text-white"
         : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
 
   const textPrimary = hasColor ? "text-white" : "text-slate-800";
