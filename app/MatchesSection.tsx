@@ -116,7 +116,7 @@ function MatchCard({ m }: { m: LiveMatch }) {
                 }
                 width={1024}
                 height={1024}
-                className="h-auto max-h-36 w-auto max-w-[min(14rem,100%)] object-contain"
+                className="h-auto max-h-[6.12rem] w-auto max-w-[min(9.52rem,100%)] object-contain"
               />
             </div>
           )}
