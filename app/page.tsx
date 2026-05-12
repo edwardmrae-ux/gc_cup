@@ -31,12 +31,26 @@ export default async function LeaderboardPage() {
 
       <section className="border border-slate-200 rounded-lg bg-white p-6 shadow-sm">
         <div className="flex justify-between items-end gap-8">
-          <div className="text-center flex-1">
+          <div className="flex flex-col items-center text-center flex-1">
+            <Image
+              src="/images/team-chubbs.png"
+              alt="Team Chubbs G.C. logo"
+              width={1024}
+              height={1024}
+              className="mb-2 h-auto w-auto max-h-20 md:max-h-24 object-contain"
+            />
             <p className="text-2xl font-bold text-slate-900">Team Chubbs</p>
             <p className="text-1xl font-light text-slate-600">16 points to retain</p>
           </div>
           <div className="pb-1 text-slate-400 font-medium">vs</div>
-          <div className="text-center flex-1">
+          <div className="flex flex-col items-center text-center flex-1">
+            <Image
+              src="/images/team-mcavoy.png"
+              alt="Team McAvoy Golf Club logo"
+              width={1024}
+              height={1024}
+              className="mb-2 h-auto w-auto max-h-20 md:max-h-24 object-contain"
+            />
             <p className="text-2xl font-bold text-slate-900">Team McAvoy</p>
             <p className="text-1xl font-light text-slate-600">16.5 points to win</p>
           </div>

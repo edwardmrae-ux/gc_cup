@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
-import { isMatchPlay1v1, isSaturdayMatchPlay } from "@/lib/db-types";
+import { isSaturdayMatchPlay } from "@/lib/db-types";
 
 function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
   if (m.status !== "complete") return null;
@@ -12,6 +13,15 @@ function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
     const b = m.teamBPoints ?? 0;
     if (a > b) return "chubbs";
     if (b > a) return "mcavoy";
+    return null;
+  }
+  if (isSaturdayMatchPlay(m.matchType)) {
+    const state = m.matchPlayState;
+    if (!state || state === "All square") return null;
+    const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
+    const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
+    if (a0 && state === `${a0} leads`) return "chubbs";
+    if (b0 && state === `${b0} leads`) return "mcavoy";
     return null;
   }
   if (m.matchType === "match_play_1v1") {
@@ -48,6 +58,7 @@ function getCardTeam(m: LiveMatch): "chubbs" | "mcavoy" | null {
 
 function MatchCard({ m }: { m: LiveMatch }) {
   const cardTeam = getCardTeam(m);
+  const completedWinner = getWinner(m);
   const holesLabel =
     m.holesCompleted != null && m.holesCompleted >= m.holes
       ? "Match Complete"
@@ -89,73 +100,95 @@ function MatchCard({ m }: { m: LiveMatch }) {
           Match {m.matchNum ?? "—"} — {nineLabel}
         </div>
 
-        {isSaturdayMatchPlay(m.matchType) ? (
-          <>
-            <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
-              <div className={`justify-self-start font-medium ${textBold}`}>
-                {teamAPlayerOne || "—"}
-              </div>
-              <div className={`justify-self-center text-center text-lg ${textMuted}`}>
-                {holesLabel ?? ""}
-              </div>
-              <div className={`justify-self-end text-right font-medium ${textBold}`}>
-                {teamBPlayerOne || "—"}
-              </div>
+        <div className="relative">
+          {completedWinner && (
+            <div className="pointer-events-none absolute left-0 right-0 top-9 bottom-2 z-10 flex items-center justify-center">
+              <Image
+                src={
+                  completedWinner === "chubbs"
+                    ? "/images/team-chubbs.png"
+                    : "/images/team-mcavoy.png"
+                }
+                alt={
+                  completedWinner === "chubbs"
+                    ? "Team Chubbs G.C. logo"
+                    : "Team McAvoy Golf Club logo"
+                }
+                width={1024}
+                height={1024}
+                className="h-auto max-h-36 w-auto max-w-[min(14rem,100%)] object-contain"
+              />
             </div>
-            {m.matchPlayState && (
-              <div className="mt-1 flex justify-center">
-                <p className={`text-lg font-semibold ${textPrimary}`}>
-                  {m.matchPlayState}
-                </p>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
-              <div className={`justify-self-start font-medium ${textBold}`}>
-                Team Chubbs
-              </div>
-              <div className={`justify-self-center text-center text-lg ${textMuted}`}>
-                {holesLabel ?? ""}
-              </div>
-              <div className={`justify-self-end text-right font-medium ${textBold}`}>
-                Team McAvoy
-              </div>
-            </div>
+          )}
 
-            <div className="grid grid-cols-3 gap-3 text-base">
-              <div className={textSecondary}>{teamAPlayerOne}</div>
-              <div />
-              <div className={`${textSecondary} text-right`}>{teamBPlayerOne}</div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 text-base">
-              <div className={textSecondary}>{teamAPlayerTwo}</div>
-              <div />
-              <div className={`${textSecondary} text-right`}>{teamBPlayerTwo}</div>
-            </div>
-
-            {m.matchType === "stableford_2v2" && (
-              <div className="mt-1 grid grid-cols-3 gap-3">
-                <div className={`text-5xl font-normal ${textPrimary}`}>
-                  {m.teamAPoints ?? 0}
+          {isSaturdayMatchPlay(m.matchType) ? (
+            <>
+              <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
+                <div className={`justify-self-start font-medium ${textBold}`}>
+                  {teamAPlayerOne || "—"}
                 </div>
+                <div className={`justify-self-center text-center text-lg ${textMuted}`}>
+                  {holesLabel ?? ""}
+                </div>
+                <div className={`justify-self-end text-right font-medium ${textBold}`}>
+                  {teamBPlayerOne || "—"}
+                </div>
+              </div>
+              {m.matchPlayState && (
+                <div className="mt-1 flex justify-center">
+                  <p className={`text-lg font-semibold ${textPrimary}`}>
+                    {m.matchPlayState}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 items-baseline gap-3 text-xl">
+                <div className={`justify-self-start font-medium ${textBold}`}>
+                  Chubbs
+                </div>
+                <div className={`justify-self-center text-center text-lg ${textMuted}`}>
+                  {holesLabel ?? ""}
+                </div>
+                <div className={`justify-self-end text-right font-medium ${textBold}`}>
+                  McAvoy
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-base">
+                <div className={textSecondary}>{teamAPlayerOne}</div>
                 <div />
-                <div className={`text-5xl font-normal ${textPrimary} text-right`}>
-                  {m.teamBPoints ?? 0}
+                <div className={`${textSecondary} text-right`}>{teamBPlayerOne}</div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-base">
+                <div className={textSecondary}>{teamAPlayerTwo}</div>
+                <div />
+                <div className={`${textSecondary} text-right`}>{teamBPlayerTwo}</div>
+              </div>
+
+              {m.matchType === "stableford_2v2" && (
+                <div className="mt-1 grid grid-cols-3 gap-3">
+                  <div className={`text-5xl font-normal ${textPrimary}`}>
+                    {m.teamAPoints ?? 0}
+                  </div>
+                  <div />
+                  <div className={`text-5xl font-normal ${textPrimary} text-right`}>
+                    {m.teamBPoints ?? 0}
+                  </div>
                 </div>
-              </div>
-            )}
-            {m.matchType === "match_play_1v1" && m.matchPlayState && (
-              <div className="mt-1 flex justify-end">
-                <p className={`text-lg font-semibold ${textPrimary}`}>
-                  {m.matchPlayState}
-                </p>
-              </div>
-            )}
-          </>
-        )}
+              )}
+              {m.matchType === "match_play_1v1" && m.matchPlayState && (
+                <div className="mt-1 flex justify-end">
+                  <p className={`text-lg font-semibold ${textPrimary}`}>
+                    {m.matchPlayState}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </Link>
   );
