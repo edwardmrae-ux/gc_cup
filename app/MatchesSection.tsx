@@ -60,11 +60,13 @@ function MatchCard({ m }: { m: LiveMatch }) {
   const cardTeam = getCardTeam(m);
   const completedWinner = getWinner(m);
   const holesLabel =
-    m.holesCompleted != null && m.holesCompleted >= m.holes
-      ? "Match Complete"
-      : m.holesCompleted != null && m.holesCompleted > 0
-        ? `Thru ${m.holesCompleted}`
-        : null;
+    m.status === "complete"
+      ? "Final"
+      : m.holesCompleted != null && m.holesCompleted >= m.holes
+        ? "Match Complete"
+        : m.holesCompleted != null && m.holesCompleted > 0
+          ? `Thru ${m.holesCompleted}`
+          : null;
 
   const hasColor = !!cardTeam;
 
