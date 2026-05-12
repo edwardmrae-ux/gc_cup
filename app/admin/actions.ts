@@ -144,6 +144,31 @@ export async function updateMatchStatus(matchId: string, status: string) {
   return {};
 }
 
+export async function deleteMatch(matchId: string) {
+  const supabase = await createClient();
+  const { error: hsErr } = await supabase
+    .from("hole_scores")
+    .delete()
+    .eq("match_id", matchId);
+  if (hsErr) return { error: hsErr.message };
+  const { error: mErr } = await supabase
+    .from("matches")
+    .delete()
+    .eq("id", matchId);
+  if (mErr) return { error: mErr.message };
+  return {};
+}
+
+export async function clearMatchScores(matchId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("hole_scores")
+    .delete()
+    .eq("match_id", matchId);
+  if (error) return { error: error.message };
+  return {};
+}
+
 export async function setActiveSessionAction(sessionId: string | null) {
   const supabase = await createClient();
 

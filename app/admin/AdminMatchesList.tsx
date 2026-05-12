@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { MatchStatusSelect } from "./MatchStatusSelect";
+import { DeleteMatchButton } from "./DeleteMatchButton";
+import { ClearScoresButton } from "./ClearScoresButton";
 
 export type AdminMatchRow = {
   id: string;
@@ -148,6 +150,8 @@ export function AdminMatchesList({
                   Open scoring ({m.holes} holes)
                 </Link>
                 <MatchStatusSelect matchId={m.id} currentStatus={m.status} />
+                <ClearScoresButton matchId={m.id} />
+                <DeleteMatchButton matchId={m.id} />
               </div>
             </li>
           ))}
