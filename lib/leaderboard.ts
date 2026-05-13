@@ -4,6 +4,7 @@ import {
   stablefordTotal,
   stableford2v2Points,
   matchPlay1v1Points,
+  matchPlay1v1HolesWon,
   type HoleScoreRow,
 } from "./team-points";
 
@@ -313,19 +314,30 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
       const teamAPlayerId = teamAIds[0];
       const teamBPlayerId = teamBIds[0];
       if (teamAPlayerId && teamBPlayerId) {
-        const { team_a, team_b } = matchPlay1v1Points(
-          scoreRows,
-          teamAPlayerId,
-          teamBPlayerId,
-          m.holes,
-          holeNumbers
-        );
         const nameA = playersById.get(teamAPlayerId) ?? "";
         const nameB = playersById.get(teamBPlayerId) ?? "";
         if (isSaturdayMatchPlay(m.match_type)) {
+          const { holesA, holesB } = matchPlay1v1HolesWon(
+            scoreRows,
+            teamAPlayerId,
+            teamBPlayerId,
+            m.holes,
+            holeNumbers
+          );
           matchPlayState =
-            team_a > team_b ? `${nameA} leads` : team_b > team_a ? `${nameB} leads` : "All square";
+            holesA > holesB
+              ? `${nameA} ${holesA - holesB} up`
+              : holesB > holesA
+                ? `${nameB} ${holesB - holesA} up`
+                : "All square";
         } else {
+          const { team_a, team_b } = matchPlay1v1Points(
+            scoreRows,
+            teamAPlayerId,
+            teamBPlayerId,
+            m.holes,
+            holeNumbers
+          );
           matchPlayState =
             team_a > team_b ? "Chubbs leads" : team_b > team_a ? "McAvoy leads" : "All square";
         }
@@ -478,19 +490,30 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
       teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig, parMap, holeNumbers);
       teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig, parMap, holeNumbers);
     } else if (teamAIds[0] && teamBIds[0]) {
-      const { team_a, team_b } = matchPlay1v1Points(
-        scoreRows,
-        teamAIds[0],
-        teamBIds[0],
-        m.holes,
-        holeNumbers
-      );
       const nameA = playersById.get(teamAIds[0]) ?? "";
       const nameB = playersById.get(teamBIds[0]) ?? "";
       if (isSaturdayMatchPlay(m.match_type)) {
+        const { holesA, holesB } = matchPlay1v1HolesWon(
+          scoreRows,
+          teamAIds[0],
+          teamBIds[0],
+          m.holes,
+          holeNumbers
+        );
         matchPlayState =
-          team_a > team_b ? `${nameA} leads` : team_b > team_a ? `${nameB} leads` : "All square";
+          holesA > holesB
+            ? `${nameA} ${holesA - holesB} up`
+            : holesB > holesA
+              ? `${nameB} ${holesB - holesA} up`
+              : "All square";
       } else {
+        const { team_a, team_b } = matchPlay1v1Points(
+          scoreRows,
+          teamAIds[0],
+          teamBIds[0],
+          m.holes,
+          holeNumbers
+        );
         matchPlayState =
           team_a > team_b ? "Chubbs leads" : team_b > team_a ? "McAvoy leads" : "All square";
       }

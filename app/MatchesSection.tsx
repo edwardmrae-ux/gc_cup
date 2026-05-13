@@ -6,6 +6,21 @@ import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 import { isSaturdayMatchPlay } from "@/lib/db-types";
 
+/** Parse `matchPlayState` like "Sturm 2 up" for Saturday 1v1 cards. */
+function saturdayMatchPlayLeaderFromState(
+  state: string | undefined,
+  a0: string,
+  b0: string
+): "chubbs" | "mcavoy" | null {
+  if (!state || state === "All square") return null;
+  const parsed = state.match(/^(.+) (\d+) up$/);
+  if (!parsed) return null;
+  const leaderName = parsed[1];
+  if (a0 && leaderName === a0) return "chubbs";
+  if (b0 && leaderName === b0) return "mcavoy";
+  return null;
+}
+
 function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
   if (m.status !== "complete") return null;
   if (m.matchType === "stableford_2v2") {
@@ -16,13 +31,9 @@ function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
     return null;
   }
   if (isSaturdayMatchPlay(m.matchType)) {
-    const state = m.matchPlayState;
-    if (!state || state === "All square") return null;
     const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
     const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
-    if (a0 && state === `${a0} leads`) return "chubbs";
-    if (b0 && state === `${b0} leads`) return "mcavoy";
-    return null;
+    return saturdayMatchPlayLeaderFromState(m.matchPlayState, a0, b0);
   }
   if (m.matchType === "match_play_1v1") {
     if (m.matchPlayState === "Chubbs leads") return "chubbs";
@@ -41,6 +52,11 @@ function getCurrentLeader(m: LiveMatch): "chubbs" | "mcavoy" | null {
       if (b > a) return "mcavoy";
     }
     return null;
+  }
+  if (isSaturdayMatchPlay(m.matchType)) {
+    const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
+    const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
+    return saturdayMatchPlayLeaderFromState(m.matchPlayState, a0, b0);
   }
   if (m.matchType === "match_play_1v1") {
     if (m.matchPlayState === "Chubbs leads") return "chubbs";
