@@ -6,16 +6,16 @@ import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 import { isSaturdayMatchPlay } from "@/lib/db-types";
 
-/** Parse `matchPlayState` like "Sturm 2 up" for Saturday 1v1 cards. */
-function saturdayMatchPlayLeaderFromState(
+/** Parse 1v1 `matchPlayState` strings and infer current leader. */
+function oneVOneLeaderFromState(
   state: string | undefined,
   a0: string,
   b0: string
 ): "chubbs" | "mcavoy" | null {
-  if (!state || state === "All square") return null;
-  const parsed = state.match(/^(.+) (\d+) up$/);
+  if (!state || state.toLowerCase() === "all square") return null;
+  const parsed = state.match(/^(.+?) (?:\d+ up|wins \d+&\d+|wins \d+ up)$/);
   if (!parsed) return null;
-  const leaderName = parsed[1];
+  const leaderName = parsed[1].trim();
   if (a0 && leaderName === a0) return "chubbs";
   if (b0 && leaderName === b0) return "mcavoy";
   return null;
@@ -33,12 +33,14 @@ function getWinner(m: LiveMatch): "chubbs" | "mcavoy" | null {
   if (isSaturdayMatchPlay(m.matchType)) {
     const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
     const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
-    return saturdayMatchPlayLeaderFromState(m.matchPlayState, a0, b0);
+    return oneVOneLeaderFromState(m.matchPlayState, a0, b0);
   }
   if (m.matchType === "match_play_1v1") {
     if (m.matchPlayState === "Chubbs leads") return "chubbs";
     if (m.matchPlayState === "McAvoy leads") return "mcavoy";
-    return null;
+    const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
+    const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
+    return oneVOneLeaderFromState(m.matchPlayState, a0, b0);
   }
   return null;
 }
@@ -56,12 +58,14 @@ function getCurrentLeader(m: LiveMatch): "chubbs" | "mcavoy" | null {
   if (isSaturdayMatchPlay(m.matchType)) {
     const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
     const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
-    return saturdayMatchPlayLeaderFromState(m.matchPlayState, a0, b0);
+    return oneVOneLeaderFromState(m.matchPlayState, a0, b0);
   }
   if (m.matchType === "match_play_1v1") {
     if (m.matchPlayState === "Chubbs leads") return "chubbs";
     if (m.matchPlayState === "McAvoy leads") return "mcavoy";
-    return null;
+    const a0 = (m.playerNames?.team_a?.[0] ?? "").trim();
+    const b0 = (m.playerNames?.team_b?.[0] ?? "").trim();
+    return oneVOneLeaderFromState(m.matchPlayState, a0, b0);
   }
   return null;
 }

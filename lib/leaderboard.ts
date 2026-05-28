@@ -30,6 +30,42 @@ export interface LiveMatch {
   nine?: "front" | "back" | null;
 }
 
+const SESSION_SCOPED_1V1_STATUS_NAMES = ["saturday afternoon", "sunday morning"] as const;
+const SESSION_SCOPED_1V1_TOTAL_HOLES = 9;
+
+function isSessionScoped1v1Status(matchType: string, sessionName: string | null | undefined): boolean {
+  if (matchType !== "match_play_1v1" && !isSaturdayMatchPlay(matchType)) {
+    return false;
+  }
+
+  const normalizedSessionName = (sessionName ?? "").trim().toLowerCase();
+  return SESSION_SCOPED_1V1_STATUS_NAMES.some((target) => normalizedSessionName.includes(target));
+}
+
+export function formatSessionScoped1v1MatchPlayState(args: {
+  holesA: number;
+  holesB: number;
+  holesCompleted: number;
+  playerAName: string;
+  playerBName: string;
+}): string {
+  const { holesA, holesB, holesCompleted, playerAName, playerBName } = args;
+  const lead = Math.abs(holesA - holesB);
+  if (lead === 0) return "All Square";
+
+  const leaderName = holesA > holesB ? playerAName : playerBName;
+  const safeHolesCompleted = Math.max(0, Math.min(SESSION_SCOPED_1V1_TOTAL_HOLES, holesCompleted));
+  const holesRemaining = SESSION_SCOPED_1V1_TOTAL_HOLES - safeHolesCompleted;
+
+  if (safeHolesCompleted >= SESSION_SCOPED_1V1_TOTAL_HOLES) {
+    return `${leaderName} wins ${lead} up`;
+  }
+  if (lead > holesRemaining) {
+    return `${leaderName} wins ${lead}&${holesRemaining}`;
+  }
+  return `${leaderName} ${lead} up`;
+}
+
 function computeHolesCompleted(
   scoreRows: HoleScoreRow[],
   playerIds: string[],
@@ -316,7 +352,22 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
       if (teamAPlayerId && teamBPlayerId) {
         const nameA = playersById.get(teamAPlayerId) ?? "";
         const nameB = playersById.get(teamBPlayerId) ?? "";
-        if (isSaturdayMatchPlay(m.match_type)) {
+        if (isSessionScoped1v1Status(m.match_type, (session as any)?.name ?? null)) {
+          const { holesA, holesB } = matchPlay1v1HolesWon(
+            scoreRows,
+            teamAPlayerId,
+            teamBPlayerId,
+            m.holes,
+            holeNumbers
+          );
+          matchPlayState = formatSessionScoped1v1MatchPlayState({
+            holesA,
+            holesB,
+            holesCompleted,
+            playerAName: nameA,
+            playerBName: nameB,
+          });
+        } else if (isSaturdayMatchPlay(m.match_type)) {
           const { holesA, holesB } = matchPlay1v1HolesWon(
             scoreRows,
             teamAPlayerId,
@@ -492,7 +543,22 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     } else if (teamAIds[0] && teamBIds[0]) {
       const nameA = playersById.get(teamAIds[0]) ?? "";
       const nameB = playersById.get(teamBIds[0]) ?? "";
-      if (isSaturdayMatchPlay(m.match_type)) {
+      if (isSessionScoped1v1Status(m.match_type, (session as any)?.name ?? null)) {
+        const { holesA, holesB } = matchPlay1v1HolesWon(
+          scoreRows,
+          teamAIds[0],
+          teamBIds[0],
+          m.holes,
+          holeNumbers
+        );
+        matchPlayState = formatSessionScoped1v1MatchPlayState({
+          holesA,
+          holesB,
+          holesCompleted,
+          playerAName: nameA,
+          playerBName: nameB,
+        });
+      } else if (isSaturdayMatchPlay(m.match_type)) {
         const { holesA, holesB } = matchPlay1v1HolesWon(
           scoreRows,
           teamAIds[0],
