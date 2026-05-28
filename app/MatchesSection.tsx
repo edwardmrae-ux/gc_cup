@@ -246,6 +246,57 @@ type SessionMatchGroup = {
   matches: LiveMatch[];
 };
 
+type SaturdayFoursomeGroup = {
+  key: string;
+  label: string;
+  matches: LiveMatch[];
+  logoSrc: string | null;
+};
+
+const SATURDAY_FOURSOME_LOGOS: Record<string, string> = {
+  "Harborfields Invitational": "/images/Green Jacket.png",
+  "Miller High Life Classic": "/images/Gold Jacket.png",
+  "Smirnoff Ice Shootout": "/images/Silver Jacket.png",
+  "The Masters by Dr. McGillicuddy's Menthol Mint": "/images/Rainbow Jacket.png",
+};
+
+function isSaturdayAfternoonSession(activeSessionName: string | null): boolean {
+  return (activeSessionName ?? "").toLowerCase().includes("saturday afternoon");
+}
+
+function compareMatchesByMatchNum(a: LiveMatch, b: LiveMatch): number {
+  const numA = a.matchNum ?? Number.POSITIVE_INFINITY;
+  const numB = b.matchNum ?? Number.POSITIVE_INFINITY;
+  if (numA !== numB) return numA - numB;
+  return a.id.localeCompare(b.id);
+}
+
+function groupSaturdayMatchesByFoursome(matches: LiveMatch[]): SaturdayFoursomeGroup[] {
+  const map = new Map<string, LiveMatch[]>();
+  const order: string[] = [];
+
+  for (const m of matches) {
+    const rawLabel = m.foursomeLabel?.trim() ?? "";
+    const key = rawLabel || `foursome:${m.sessionId ?? "unknown"}:${m.id}`;
+    if (!map.has(key)) {
+      order.push(key);
+      map.set(key, []);
+    }
+    map.get(key)!.push(m);
+  }
+
+  return order.map((key) => {
+    const grouped = [...(map.get(key) ?? [])].sort(compareMatchesByMatchNum);
+    const label = grouped[0]?.foursomeLabel?.trim() || "Foursome";
+    return {
+      key,
+      label,
+      matches: grouped,
+      logoSrc: SATURDAY_FOURSOME_LOGOS[label] ?? null,
+    };
+  });
+}
+
 function groupMatchesBySession(matches: LiveMatch[]): SessionMatchGroup[] {
   const map = new Map<string, LiveMatch[]>();
   const order: string[] = [];
@@ -308,6 +359,11 @@ export function MatchesSection({
 
   const sessionGroups = matches.length === 0 ? [] : groupMatchesBySession(matches);
   const showSessionHeadings = sessionGroups.length > 1;
+  const showSaturdayFoursomeGrouping = isSaturdayAfternoonSession(matchState.activeSessionName);
+  const saturdayGroups =
+    showSaturdayFoursomeGrouping && matches.length > 0
+      ? groupSaturdayMatchesByFoursome(matches)
+      : [];
 
   async function handleRefresh() {
     try {
@@ -417,6 +473,39 @@ export function MatchesSection({
       </p>
       {matches.length === 0 ? (
         <p className="text-sm text-slate-500 py-4">No matches in this category yet.</p>
+      ) : showSaturdayFoursomeGrouping ? (
+        <div className="space-y-4">
+          {saturdayGroups.map((group) => (
+            <details key={group.key} open className="rounded-lg border border-slate-200 bg-white shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-3 hover:bg-slate-50">
+                <div className="flex items-center gap-3 min-w-0">
+                  {group.logoSrc && (
+                    <Image
+                      src={group.logoSrc}
+                      alt={`${group.label} logo`}
+                      width={200}
+                      height={200}
+                      className="h-9 w-9 object-contain"
+                    />
+                  )}
+                  <span className="truncate text-sm font-semibold text-slate-800">{group.label}</span>
+                </div>
+                <span className="text-xs font-medium text-slate-500">
+                  {group.matches.length} {group.matches.length === 1 ? "match" : "matches"}
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
+                <ul className="space-y-3">
+                  {group.matches.map((m) => (
+                    <li key={m.id}>
+                      <MatchCard m={m} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </details>
+          ))}
+        </div>
       ) : (
         <div className="space-y-6">
           {sessionGroups.map((group) => (
