@@ -1,11 +1,7 @@
 import { createClient } from "./supabase/server";
+import { TRACKED_SESSION_NAMES } from "./session-names";
 
-/** Session names (exact labels for columns); matched case-insensitively against `sessions.name`. */
-export const TRACKED_SESSION_NAMES = [
-  "Friday Afternoon",
-  "Saturday Morning",
-  "Sunday Morning",
-] as const;
+export { TRACKED_SESSION_NAMES };
 
 export type TeamColor = "chubbs" | "mcavoy" | null;
 

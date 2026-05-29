@@ -5,6 +5,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 import { isSaturdayMatchPlay } from "@/lib/db-types";
+import { TRACKED_SESSION_NAMES } from "@/lib/session-names";
+
+function isTeamCompetitionSession(sessionName: string): boolean {
+  const normalized = sessionName.trim().toLowerCase();
+  return TRACKED_SESSION_NAMES.some(
+    (name) => normalized === name.toLowerCase()
+  );
+}
 
 /** Parse 1v1 `matchPlayState` strings and infer current leader. */
 function oneVOneLeaderFromState(
@@ -70,15 +78,13 @@ function getCurrentLeader(m: LiveMatch): "chubbs" | "mcavoy" | null {
   return null;
 }
 
-function getCardTeam(m: LiveMatch): "chubbs" | "mcavoy" | null {
-  if (m.status === "complete") return getWinner(m);
-  if (m.status === "in_progress") return getCurrentLeader(m);
-  return null;
-}
-
 function MatchCard({ m }: { m: LiveMatch }) {
-  const cardTeam = getCardTeam(m);
   const completedWinner = getWinner(m);
+  const inProgressLeader =
+    m.status === "in_progress" ? getCurrentLeader(m) : null;
+  const logoTeam =
+    completedWinner ??
+    (isTeamCompetitionSession(m.sessionName) ? inProgressLeader : null);
   const holesLabel =
     m.status === "complete"
       ? "Final"
@@ -88,12 +94,12 @@ function MatchCard({ m }: { m: LiveMatch }) {
           ? `Thru ${m.holesCompleted}`
           : null;
 
-  const hasColor = !!cardTeam;
+  const hasColor = !!completedWinner;
 
   const cardClasses =
-    cardTeam === "chubbs"
+    completedWinner === "chubbs"
       ? "block border border-white/30 rounded-lg p-4 bg-[#427340] hover:opacity-95 shadow-sm text-white"
-      : cardTeam === "mcavoy"
+      : completedWinner === "mcavoy"
         ? "block border border-white/30 rounded-lg p-4 bg-[#3C4E73] hover:opacity-95 shadow-sm text-white"
         : "block border border-slate-200 rounded-lg p-4 bg-white hover:bg-slate-50 shadow-sm";
 
@@ -123,16 +129,16 @@ function MatchCard({ m }: { m: LiveMatch }) {
         </div>
 
         <div className="relative">
-          {completedWinner && (
+          {logoTeam && (
             <div className="pointer-events-none absolute left-0 right-0 top-9 bottom-2 z-10 flex items-center justify-center">
               <Image
                 src={
-                  completedWinner === "chubbs"
+                  logoTeam === "chubbs"
                     ? "/images/team-chubbs.png"
                     : "/images/team-mcavoy.png"
                 }
                 alt={
-                  completedWinner === "chubbs"
+                  logoTeam === "chubbs"
                     ? "Team Chubbs G.C. logo"
                     : "Team McAvoy Golf Club logo"
                 }
