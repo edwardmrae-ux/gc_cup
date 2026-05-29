@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { LiveMatch } from "@/lib/leaderboard";
 import { isSaturdayMatchPlay } from "@/lib/db-types";
 import { TRACKED_SESSION_NAMES } from "@/lib/session-names";
+import { SATURDAY_FOURSOME_LOGOS } from "@/lib/saturday-foursomes";
 
 function isTeamCompetitionSession(sessionName: string): boolean {
   const normalized = sessionName.trim().toLowerCase();
@@ -263,13 +264,6 @@ type SaturdayFoursomeGroup = {
   logoSrc: string | null;
 };
 
-const SATURDAY_FOURSOME_LOGOS: Record<string, string> = {
-  "Harborfields Invitational": "/images/Green Jacket.png",
-  "Miller High Life Classic": "/images/Gold Jacket.png",
-  "Smirnoff Ice Shootout": "/images/Silver Jacket.png",
-  "The Masters by Dr. McGillicuddy's Menthol Mint": "/images/Rainbow Jacket.png",
-};
-
 function isSaturdayAfternoonSession(activeSessionName: string | null): boolean {
   return (activeSessionName ?? "").toLowerCase().includes("saturday afternoon");
 }
@@ -302,7 +296,7 @@ function groupSaturdayMatchesByFoursome(matches: LiveMatch[]): SaturdayFoursomeG
       key,
       label,
       matches: grouped,
-      logoSrc: SATURDAY_FOURSOME_LOGOS[label] ?? null,
+      logoSrc: SATURDAY_FOURSOME_LOGOS[label as keyof typeof SATURDAY_FOURSOME_LOGOS] ?? null,
     };
   });
 }

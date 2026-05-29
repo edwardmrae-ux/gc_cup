@@ -1,0 +1,2 @@
+ALTER TABLE players
+  ADD COLUMN IF NOT EXISTS defending_champ BOOLEAN NOT NULL DEFAULT false;

@@ -1,7 +1,12 @@
 import { createClient } from "./supabase/server";
 import { TRACKED_SESSION_NAMES } from "./session-names";
+import {
+  buildSaturdayAfternoonFoursomeGroups,
+  type SaturdayFoursomeGroup,
+} from "./saturday-afternoon-seeding";
 
 export { TRACKED_SESSION_NAMES };
+export type { SaturdayFoursomeGroup };
 
 export type TeamColor = "chubbs" | "mcavoy" | null;
 
@@ -9,6 +14,7 @@ export interface IndividualScoreRow {
   playerId: string;
   playerName: string;
   teamColor: TeamColor;
+  defendingChamp: boolean;
   /** Length 3, aligned with `TRACKED_SESSION_NAMES`. */
   sessionStrokes: (number | null)[];
   cumulative: number | null;
@@ -16,7 +22,8 @@ export interface IndividualScoreRow {
 
 export interface IndividualScoringData {
   columnLabels: string[];
-  rows: IndividualScoreRow[];
+  saturdayFoursomeGroups: SaturdayFoursomeGroup[];
+  noDefendingChampion: boolean;
 }
 
 function normalizeSessionName(s: string): string {
@@ -56,7 +63,7 @@ export async function getIndividualScoring(): Promise<IndividualScoringData> {
   const [{ data: allSessions }, { data: teams }, { data: players }] = await Promise.all([
     supabase.from("sessions").select("id, name"),
     supabase.from("teams").select("id, name"),
-    supabase.from("players").select("id, name, team_id").order("name"),
+    supabase.from("players").select("id, name, team_id, defending_champ").order("name"),
   ]);
 
   const nameToId = new Map<string, string>();
@@ -117,6 +124,9 @@ export async function getIndividualScoring(): Promise<IndividualScoringData> {
 
   const teamColorByTeamId = buildTeamColorMap(teams ?? []);
 
+  const defendingChampPlayerId =
+    (players ?? []).find((p) => p.defending_champ === true)?.id ?? null;
+
   const rows: IndividualScoreRow[] = (players ?? []).map((p) => {
     const bySession = sums.get(p.id);
     const sessionStrokes: (number | null)[] = [0, 1, 2].map((i) => {
@@ -132,13 +142,20 @@ export async function getIndividualScoring(): Promise<IndividualScoringData> {
       playerId: p.id,
       playerName: p.name,
       teamColor: teamColorByTeamId.get(p.team_id) ?? null,
+      defendingChamp: p.defending_champ === true,
       sessionStrokes,
       cumulative,
     };
   });
 
+  const sortedRows = sortIndividualRows(rows);
+
   return {
     columnLabels: [...TRACKED_SESSION_NAMES],
-    rows: sortIndividualRows(rows),
+    saturdayFoursomeGroups: buildSaturdayAfternoonFoursomeGroups(
+      sortedRows,
+      defendingChampPlayerId
+    ),
+    noDefendingChampion: defendingChampPlayerId == null,
   };
 }

@@ -18,6 +18,7 @@ export interface Player {
   id: string;
   name: string;
   team_id: string;
+  defending_champ?: boolean;
 }
 
 export interface Session {
