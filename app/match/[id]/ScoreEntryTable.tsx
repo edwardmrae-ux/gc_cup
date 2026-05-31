@@ -10,6 +10,20 @@ function scoreKey(playerId: string, holeNum: number) {
   return `${playerId}-${holeNum}`;
 }
 
+function teamStablefordForHole(
+  playerIds: string[],
+  holeNum: number,
+  getScore: (playerId: string, holeNum: number) => number | undefined,
+  parByHole: Record<number, number> | null,
+  stablefordConfig: { strokes_over_par: number; points: number }[]
+): number {
+  const par = parByHole?.[holeNum] ?? getParForHole(holeNum);
+  return playerIds.reduce((sum, pid) => {
+    const s = getScore(pid, holeNum);
+    return s == null ? sum : sum + getStablefordPoints(s, par, stablefordConfig);
+  }, 0);
+}
+
 export function ScoreEntryTable({
   matchId,
   players,
@@ -111,16 +125,10 @@ export function ScoreEntryTable({
             {holeNumbers.map((holeNum) => {
               const par = parByHole?.[holeNum] ?? getParForHole(holeNum);
               const teamAPts = is2v2
-                ? teamAIds.reduce((sum, pid) => {
-                    const s = getScore(pid, holeNum);
-                    return s == null ? sum : sum + getStablefordPoints(s, par, stablefordConfig);
-                  }, 0)
+                ? teamStablefordForHole(teamAIds, holeNum, getScore, parByHole, stablefordConfig)
                 : 0;
               const teamBPts = is2v2
-                ? teamBIds.reduce((sum, pid) => {
-                    const s = getScore(pid, holeNum);
-                    return s == null ? sum : sum + getStablefordPoints(s, par, stablefordConfig);
-                  }, 0)
+                ? teamStablefordForHole(teamBIds, holeNum, getScore, parByHole, stablefordConfig)
                 : 0;
               return (
                 <tr key={holeNum} className="border-b border-slate-100">
@@ -191,6 +199,20 @@ export function ScoreEntryTable({
               );
               const hasAnyScore = playerTotals.some((t) => t > 0);
               if (!hasAnyScore) return null;
+              const teamATotal = is2v2
+                ? holeNumbers.reduce(
+                    (sum, h) =>
+                      sum + teamStablefordForHole(teamAIds, h, getScore, parByHole, stablefordConfig),
+                    0
+                  )
+                : 0;
+              const teamBTotal = is2v2
+                ? holeNumbers.reduce(
+                    (sum, h) =>
+                      sum + teamStablefordForHole(teamBIds, h, getScore, parByHole, stablefordConfig),
+                    0
+                  )
+                : 0;
               return (
                 <tr className="border-t-2 border-slate-200 bg-slate-50/80">
                   <td className="py-2 pr-4 pl-4 font-semibold text-slate-800">
@@ -206,8 +228,12 @@ export function ScoreEntryTable({
                   ))}
                   {is2v2 && (
                     <>
-                      <td className="py-2 pr-4 text-slate-600">–</td>
-                      <td className="py-2 pr-4 text-slate-600">–</td>
+                      <td className="py-2 pr-4 font-semibold text-slate-800">
+                        {teamATotal || "–"}
+                      </td>
+                      <td className="py-2 pr-4 font-semibold text-slate-800">
+                        {teamBTotal || "–"}
+                      </td>
                     </>
                   )}
                 </tr>
