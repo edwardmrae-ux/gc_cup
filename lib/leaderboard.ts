@@ -1,10 +1,11 @@
 import { createClient } from "./supabase/server";
 import { isSaturdayMatchPlay } from "./db-types";
 import {
-  stablefordTotal,
   stableford2v2Points,
   matchPlay1v1Points,
   matchPlay1v1HolesWon,
+  computeStablefordPairTotals,
+  effectiveStablefordTotals,
   type HoleScoreRow,
 } from "./team-points";
 
@@ -136,7 +137,9 @@ export async function getTeamTotals(): Promise<TeamTotals> {
   const foursomeIds = foursomes.map((f) => f.id);
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, foursome_id, match_type, holes, status, nine")
+    .select(
+      "id, foursome_id, match_type, holes, status, nine, team_a_score_override, team_b_score_override"
+    )
     .in("foursome_id", foursomeIds)
     .eq("status", "complete");
   if (!matches?.length) return { teamChubbs: 0, teamMcAvoy: 0 };
@@ -209,8 +212,21 @@ export async function getTeamTotals(): Promise<TeamTotals> {
           : Array.from({ length: 9 }, (_, i) => i + 1);
 
     if (match.match_type === "stableford_2v2") {
-      const ptsA = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parMap, holeNumbers);
-      const ptsB = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parMap, holeNumbers);
+      const { teamA: computedA, teamB: computedB } = computeStablefordPairTotals(
+        scoreRows,
+        teamAIds,
+        teamBIds,
+        holeCount,
+        stablefordConfig,
+        parMap,
+        match.nine
+      );
+      const { teamA: ptsA, teamB: ptsB } = effectiveStablefordTotals(
+        computedA,
+        computedB,
+        match.team_a_score_override,
+        match.team_b_score_override
+      );
       const { team_a, team_b } = stableford2v2Points(ptsA, ptsB);
       teamChubbs += team_a;
       teamMcAvoy += team_b;
@@ -238,7 +254,9 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
   const supabase = await createClient();
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, foursome_id, match_type, holes, status, nine, match_num")
+    .select(
+      "id, foursome_id, match_type, holes, status, nine, match_num, team_a_score_override, team_b_score_override"
+    )
     .eq("status", "in_progress");
   if (!matches?.length) return [];
 
@@ -344,8 +362,23 @@ export async function getInProgressMatches(): Promise<LiveMatch[]> {
     let matchPlayState: string | undefined;
 
     if (m.match_type === "stableford_2v2") {
-      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig, parMap, holeNumbers);
-      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig, parMap, holeNumbers);
+      const { teamA: computedA, teamB: computedB } = computeStablefordPairTotals(
+        scoreRows,
+        teamAIds,
+        teamBIds,
+        m.holes,
+        stablefordConfig,
+        parMap,
+        m.nine
+      );
+      const effective = effectiveStablefordTotals(
+        computedA,
+        computedB,
+        m.team_a_score_override,
+        m.team_b_score_override
+      );
+      teamAPoints = effective.teamA;
+      teamBPoints = effective.teamB;
     } else {
       const teamAPlayerId = teamAIds[0];
       const teamBPlayerId = teamBIds[0];
@@ -423,7 +456,9 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
   const supabase = await createClient();
   const matchesResult = await supabase
     .from("matches")
-    .select("id, foursome_id, match_type, holes, status, nine, match_num")
+    .select(
+      "id, foursome_id, match_type, holes, status, nine, match_num, team_a_score_override, team_b_score_override"
+    )
     .order("id");
   const matches = matchesResult.data;
   if (!matches?.length) return [];
@@ -538,8 +573,23 @@ export async function getAllMatches(): Promise<LiveMatch[]> {
     let teamBPoints: number | undefined;
     let matchPlayState: string | undefined;
     if (m.match_type === "stableford_2v2") {
-      teamAPoints = stablefordTotal(scoreRows, teamAIds, m.holes, stablefordConfig, parMap, holeNumbers);
-      teamBPoints = stablefordTotal(scoreRows, teamBIds, m.holes, stablefordConfig, parMap, holeNumbers);
+      const { teamA: computedA, teamB: computedB } = computeStablefordPairTotals(
+        scoreRows,
+        teamAIds,
+        teamBIds,
+        m.holes,
+        stablefordConfig,
+        parMap,
+        m.nine
+      );
+      const effective = effectiveStablefordTotals(
+        computedA,
+        computedB,
+        m.team_a_score_override,
+        m.team_b_score_override
+      );
+      teamAPoints = effective.teamA;
+      teamBPoints = effective.teamB;
     } else if (teamAIds[0] && teamBIds[0]) {
       const nameA = playersById.get(teamAIds[0]) ?? "";
       const nameB = playersById.get(teamBIds[0]) ?? "";

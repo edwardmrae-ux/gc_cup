@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { type MatchType, isMatchPlay1v1 } from "@/lib/db-types";
 import { getActiveSessionId, setActiveSessionId } from "@/lib/activeSessionStore";
+import {
+  computeStablefordPairTotals,
+  type HoleScoreRow,
+} from "@/lib/team-points";
 
 const ADMIN_COOKIE_NAME = "gc_admin_pin";
 
@@ -165,6 +169,101 @@ export async function clearMatchScores(matchId: string) {
     .from("hole_scores")
     .delete()
     .eq("match_id", matchId);
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function updateMatchScoreOverride(
+  matchId: string,
+  teamA: number,
+  teamB: number
+) {
+  if (!(await checkAdminCookie())) {
+    return { error: "Unauthorized" };
+  }
+
+  if (!Number.isInteger(teamA) || !Number.isInteger(teamB) || teamA < 0 || teamB < 0) {
+    return { error: "Scores must be non-negative integers" };
+  }
+
+  const supabase = await createClient();
+  const { data: match, error: matchErr } = await supabase
+    .from("matches")
+    .select("id, foursome_id, holes, status, match_type, nine")
+    .eq("id", matchId)
+    .single();
+
+  if (matchErr || !match) return { error: matchErr?.message ?? "Match not found" };
+  if (match.status !== "complete") return { error: "Only completed matches can be overridden" };
+  if (match.match_type !== "stableford_2v2") {
+    return { error: "Score override only applies to 2v2 Stableford matches" };
+  }
+
+  const { data: foursome } = await supabase
+    .from("foursomes")
+    .select("session_id")
+    .eq("id", match.foursome_id)
+    .single();
+  const { data: session } = foursome
+    ? await supabase.from("sessions").select("course_id").eq("id", foursome.session_id).single()
+    : { data: null };
+
+  let parByHole: Map<number, number> | undefined;
+  if (session?.course_id) {
+    const { data: courseHoles } = await supabase
+      .from("course_holes")
+      .select("hole_number, par")
+      .eq("course_id", session.course_id);
+    if (courseHoles) {
+      parByHole = new Map(
+        (courseHoles as { hole_number: number; par: number }[]).map((row) => [
+          row.hole_number,
+          row.par,
+        ])
+      );
+    }
+  }
+
+  const { data: matchPlayers } = await supabase
+    .from("match_players")
+    .select("player_id, side")
+    .eq("match_id", matchId);
+  if (!matchPlayers?.length) return { error: "No players found for match" };
+
+  const teamAIds = matchPlayers.filter((p) => p.side === "team_a").map((p) => p.player_id);
+  const teamBIds = matchPlayers.filter((p) => p.side === "team_b").map((p) => p.player_id);
+
+  const { data: scores } = await supabase
+    .from("hole_scores")
+    .select("player_id, hole_number, gross_score")
+    .eq("match_id", matchId);
+  const scoreRows: HoleScoreRow[] = (scores ?? []).map((s) => ({
+    player_id: s.player_id,
+    hole_number: s.hole_number,
+    gross_score: s.gross_score,
+  }));
+
+  const { data: config } = await supabase
+    .from("stableford_config")
+    .select("strokes_over_par, points");
+  const stablefordConfig = config ?? [];
+
+  const { teamA: computedA, teamB: computedB } = computeStablefordPairTotals(
+    scoreRows,
+    teamAIds,
+    teamBIds,
+    match.holes,
+    stablefordConfig,
+    parByHole,
+    match.nine
+  );
+
+  const updatePayload =
+    teamA === computedA && teamB === computedB
+      ? { team_a_score_override: null, team_b_score_override: null }
+      : { team_a_score_override: teamA, team_b_score_override: teamB };
+
+  const { error } = await supabase.from("matches").update(updatePayload).eq("id", matchId);
   if (error) return { error: error.message };
   return {};
 }

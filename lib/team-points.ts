@@ -11,6 +11,33 @@ export interface MatchPlayersBySide {
   team_b: string[];
 }
 
+export function holeNumbersForMatch(
+  holes: number,
+  nine?: "front" | "back" | null
+): number[] {
+  return holes === 18
+    ? Array.from({ length: 18 }, (_, i) => i + 1)
+    : nine === "back"
+      ? Array.from({ length: 9 }, (_, i) => i + 10)
+      : Array.from({ length: 9 }, (_, i) => i + 1);
+}
+
+export function computeStablefordPairTotals(
+  scoreRows: HoleScoreRow[],
+  teamAIds: string[],
+  teamBIds: string[],
+  holes: number,
+  stablefordConfig?: { strokes_over_par: number; points: number }[],
+  parByHole?: Map<number, number> | Record<number, number>,
+  nine?: "front" | "back" | null
+): { teamA: number; teamB: number } {
+  const holeNumbers = holeNumbersForMatch(holes, nine);
+  return {
+    teamA: stablefordTotal(scoreRows, teamAIds, holes, stablefordConfig, parByHole, holeNumbers),
+    teamB: stablefordTotal(scoreRows, teamBIds, holes, stablefordConfig, parByHole, holeNumbers),
+  };
+}
+
 /**
  * Compute Stableford total for a set of players (e.g. one pair in 2v2).
  * When holeNumbers is provided (e.g. [10..18] for back 9), only those holes are summed.
@@ -46,6 +73,23 @@ export function stablefordTotal(
     }
   }
   return total;
+}
+
+/**
+ * Resolve effective Stableford totals, applying admin overrides when set.
+ */
+export function effectiveStablefordTotals(
+  computedA: number,
+  computedB: number,
+  overrideA?: number | null,
+  overrideB?: number | null
+): { teamA: number; teamB: number; isOverridden: boolean } {
+  const isOverridden = overrideA != null || overrideB != null;
+  return {
+    teamA: overrideA ?? computedA,
+    teamB: overrideB ?? computedB,
+    isOverridden,
+  };
 }
 
 /**

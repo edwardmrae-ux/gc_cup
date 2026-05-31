@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
-  stablefordTotal,
   matchPlay1v1HolesWon,
+  computeStablefordPairTotals,
+  effectiveStablefordTotals,
 } from "@/lib/team-points";
 import { isMatchPlay1v1, isSaturdayMatchPlay } from "@/lib/db-types";
 import { ScoreEntryTable } from "./ScoreEntryTable";
@@ -19,7 +20,9 @@ export default async function MatchPage({
 
   const { data: match, error: matchErr } = await supabase
     .from("matches")
-    .select("id, foursome_id, holes, status, match_type, nine")
+    .select(
+      "id, foursome_id, holes, status, match_type, nine, team_a_score_override, team_b_score_override"
+    )
     .eq("id", matchId)
     .single();
   if (matchErr || !match) notFound();
@@ -88,10 +91,27 @@ export default async function MatchPage({
 
   let teamAPoints: number | null = null;
   let teamBPoints: number | null = null;
+  let scoreTotalOverridden = false;
   let matchPlayHeader: string | null = null;
   if (match.match_type === "stableford_2v2") {
-    teamAPoints = stablefordTotal(scoreRows, teamAIds, holeCount, stablefordConfig, parByHole, holeNumbers);
-    teamBPoints = stablefordTotal(scoreRows, teamBIds, holeCount, stablefordConfig, parByHole, holeNumbers);
+    const { teamA: computedA, teamB: computedB } = computeStablefordPairTotals(
+      scoreRows,
+      teamAIds,
+      teamBIds,
+      holeCount,
+      stablefordConfig,
+      parByHole,
+      match.nine
+    );
+    const effective = effectiveStablefordTotals(
+      computedA,
+      computedB,
+      match.team_a_score_override,
+      match.team_b_score_override
+    );
+    teamAPoints = effective.teamA;
+    teamBPoints = effective.teamB;
+    scoreTotalOverridden = effective.isOverridden;
   } else if (isMatchPlay1v1(match.match_type) && teamAIds[0] && teamBIds[0]) {
     const { holesA, holesB } = matchPlay1v1HolesWon(
       scoreRows,
@@ -167,6 +187,9 @@ export default async function MatchPage({
         teamBIds={teamBIds}
         parByHole={parByHoleObj}
         stablefordConfig={stablefordConfig}
+        displayTeamATotal={teamAPoints ?? undefined}
+        displayTeamBTotal={teamBPoints ?? undefined}
+        scoreTotalOverridden={scoreTotalOverridden}
         readOnly={match.status === "complete"}
       />
       <MatchStatusActions matchId={matchId} currentStatus={match.status} />

@@ -34,6 +34,9 @@ export function ScoreEntryTable({
   teamBIds,
   parByHole,
   stablefordConfig,
+  displayTeamATotal,
+  displayTeamBTotal,
+  scoreTotalOverridden = false,
   readOnly = false,
 }: {
   matchId: string;
@@ -45,6 +48,9 @@ export function ScoreEntryTable({
   teamBIds: string[];
   parByHole: Record<number, number> | null;
   stablefordConfig: { strokes_over_par: number; points: number }[];
+  displayTeamATotal?: number;
+  displayTeamBTotal?: number;
+  scoreTotalOverridden?: boolean;
   readOnly?: boolean;
 }) {
   const router = useRouter();
@@ -200,18 +206,22 @@ export function ScoreEntryTable({
               const hasAnyScore = playerTotals.some((t) => t > 0);
               if (!hasAnyScore) return null;
               const teamATotal = is2v2
-                ? holeNumbers.reduce(
-                    (sum, h) =>
-                      sum + teamStablefordForHole(teamAIds, h, getScore, parByHole, stablefordConfig),
-                    0
-                  )
+                ? scoreTotalOverridden && displayTeamATotal != null
+                  ? displayTeamATotal
+                  : holeNumbers.reduce(
+                      (sum, h) =>
+                        sum + teamStablefordForHole(teamAIds, h, getScore, parByHole, stablefordConfig),
+                      0
+                    )
                 : 0;
               const teamBTotal = is2v2
-                ? holeNumbers.reduce(
-                    (sum, h) =>
-                      sum + teamStablefordForHole(teamBIds, h, getScore, parByHole, stablefordConfig),
-                    0
-                  )
+                ? scoreTotalOverridden && displayTeamBTotal != null
+                  ? displayTeamBTotal
+                  : holeNumbers.reduce(
+                      (sum, h) =>
+                        sum + teamStablefordForHole(teamBIds, h, getScore, parByHole, stablefordConfig),
+                      0
+                    )
                 : 0;
               return (
                 <tr className="border-t-2 border-slate-200 bg-slate-50/80">

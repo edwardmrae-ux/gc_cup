@@ -43,6 +43,8 @@ export interface Match {
   status: MatchStatus;
   match_type: MatchType;
   sort?: number | null;
+  team_a_score_override?: number | null;
+  team_b_score_override?: number | null;
 }
 
 export interface MatchPlayer {

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { MatchStatusSelect } from "./MatchStatusSelect";
 import { DeleteMatchButton } from "./DeleteMatchButton";
 import { ClearScoresButton } from "./ClearScoresButton";
+import { MatchScoreOverrideInputs } from "./MatchScoreOverrideInputs";
 
 export type AdminMatchRow = {
   id: string;
@@ -12,11 +13,16 @@ export type AdminMatchRow = {
   sessionName: string;
   foursomeLabel: string;
   matchNum: number | null;
+  matchType: string;
   matchTypeLabel: string;
   nineLabel: string;
   holes: number;
   status: string;
   playersStr: string;
+  computedTeamA?: number;
+  computedTeamB?: number;
+  overrideTeamA?: number | null;
+  overrideTeamB?: number | null;
 };
 
 type SessionOption = { id: string; name: string; session_date: string };
@@ -142,6 +148,18 @@ export function AdminMatchesList({
                 <span className="text-slate-500">Players:</span>{" "}
                 {m.playersStr || "—"}
               </div>
+              {m.status === "complete" &&
+                m.matchType === "stableford_2v2" &&
+                m.computedTeamA != null &&
+                m.computedTeamB != null && (
+                  <MatchScoreOverrideInputs
+                    matchId={m.id}
+                    computedTeamA={m.computedTeamA}
+                    computedTeamB={m.computedTeamB}
+                    overrideTeamA={m.overrideTeamA}
+                    overrideTeamB={m.overrideTeamB}
+                  />
+                )}
               <div className="flex items-center gap-2 flex-wrap">
                 <Link
                   href={`/match/${m.id}`}
