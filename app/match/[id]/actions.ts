@@ -28,3 +28,29 @@ export async function updateMatchStatus(matchId: string, status: string) {
   if (error) return { error: error.message };
   return {};
 }
+
+export async function updateMatchHandicap(
+  matchId: string,
+  teamAHandicap: number,
+  teamBHandicap: number
+) {
+  if (
+    !Number.isInteger(teamAHandicap) ||
+    !Number.isInteger(teamBHandicap) ||
+    teamAHandicap < 0 ||
+    teamBHandicap < 0
+  ) {
+    return { error: "Handicaps must be non-negative integers" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("matches")
+    .update({
+      team_a_handicap: teamAHandicap,
+      team_b_handicap: teamBHandicap,
+    })
+    .eq("id", matchId);
+  if (error) return { error: error.message };
+  return {};
+}
